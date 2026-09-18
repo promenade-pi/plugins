@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.3 — 2026-09-18
+
+- Corrected the `homepage` and `repository` URLs. The plugins live in one
+  repository, [`promenade-pi/plugins`](https://github.com/promenade-pi/plugins),
+  not one repository per plugin under a `promenade-lab` organisation that was
+  never created. Metadata only — no functional change.
+
 ## 0.2.2 — 2026-08-16
 
 - Ships this changelog as its own tab in the plugin's detail panel.

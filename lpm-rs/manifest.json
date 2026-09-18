@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "run.promenade.lpm",
   "name": "Local Process Models",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "license": "MIT",
   "description": "Discovers Local Process Models: small, frequently-recurring Petri-net fragments over a subset of a log's activities, each possibly firing several times within one trace. A recursive process-tree search (sequence/choice/parallel/inclusive-choice/loop operators) scored by alignment-based support, confidence, determinism, language fit and coverage — ported from Tax, Sidorova, Haakma & van der Aalst's LocalProcessModelDiscovery. Also covers object-centric event logs: discovers per object type, then merges structurally matching fragments across types and flags variable arcs.",
   "authors": [
@@ -15,7 +15,7 @@
     "doi": "10.1016/j.jides.2016.11.001",
     "url": "https://github.com/promworkbench/LocalProcessModelDiscovery"
   },
-  "repository": "https://github.com/promenade-lab/lpm",
+  "repository": "https://github.com/promenade-pi/plugins/tree/main/lpm-rs",
   "pythonDeps": [],
   "keywords": [
     "local-process-models",

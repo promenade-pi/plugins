@@ -3,7 +3,7 @@
   "apiVersion": "1",
   "id": "run.promenade.metro-station",
   "name": "Metro Station",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "István Koren",
   "license": "MIT",
   "description": "The metro-map metaphor taken into the third dimension, the way a station atlas draws Shinjuku: activities are circular platforms, object types are colored routes, horizontal position is process order — and vertical position is accumulated elapsed time. A wait is therefore a literal descent, drawn as a translucent elevator shaft for a long one and a staircase for a short one, so the two-day gap before payment is a two-story drop rather than a number on an arc. A lift car runs in each shaft, and it only ever descends: on this diagram height is elapsed time, so a car climbing back would be a case traveling backwards through it — it beams to the top with a flash instead. Depth is a genuinely new axis rather than a second encoding of object type, which is why color stays free to mean what it means everywhere else in Promenade. Interactive: orbit it, flatten it back to an ordinary 2D metro map, and switch the depth axis between linear and logarithmic. Rendered with three.js WebGPURenderer, falling back to WebGL 2.",
@@ -244,7 +244,7 @@
     "visual-analytics",
     "view"
   ],
-  "homepage": "https://github.com/promenade-lab/metro-station",
+  "homepage": "https://github.com/promenade-pi/plugins/tree/main/metro-station",
   "readme": "README.md",
   "docs": [
     {

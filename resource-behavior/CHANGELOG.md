@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1 — 2026-09-18
+
+- Corrected the `homepage` and `repository` URLs. The plugins live in one
+  repository, [`promenade-pi/plugins`](https://github.com/promenade-pi/plugins),
+  not one repository per plugin under a `promenade-lab` organisation that was
+  never created. Metadata only — no functional change.
+
 ## 0.1.0 — 2026-09-16
 
 - Initial release. Profiles every person in a log: volume, spread of work,

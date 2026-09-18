@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "org.promenade.social-network",
   "name": "Social Network Mining",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "Promenade Team",
   "license": "MIT",
   "description": "Derives the organisation from the log: who hands work to whom, who subcontracts, who works together, who does the same kind of work. One weighted network over resources, five ways of measuring the relation.",
@@ -343,8 +343,8 @@
     "doi": "10.1007/s10606-005-9005-9",
     "bibtex": "@article{vanderaalst2005social,\n  title   = {Discovering Social Networks from Event Logs},\n  author  = {van der Aalst, Wil M. P. and Reijers, Hajo A. and Song, Minseok},\n  journal = {Computer Supported Cooperative Work},\n  volume  = {14}, number = {6}, pages = {549--593}, year = {2005},\n  doi     = {10.1007/s10606-005-9005-9}\n}"
   },
-  "homepage": "https://github.com/promenade-lab/social-network",
-  "repository": "https://github.com/promenade-lab/social-network",
+  "homepage": "https://github.com/promenade-pi/plugins/tree/main/social-network",
+  "repository": "https://github.com/promenade-pi/plugins/tree/main/social-network",
   "keywords": [
     "organizational-mining",
     "social-network",

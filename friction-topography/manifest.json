@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "run.promenade.friction-topography",
   "name": "Process Friction Topography",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "author": "István Koren",
   "license": "MIT",
   "description": "A performance overlay that makes waiting time part of the model's geometry. The discovered process keeps an ordinary layered ground plan; elevation is a friction statistic interpolated into a surface, so valleys are the routine high-volume path, ridges are where cases queue, and a whole slow region of the process reads as a plateau rather than as several red nodes. Clicking a peak opens the variants, cases, resources and wait distribution behind it. Rendered with three.js WebGPURenderer, falling back to WebGL 2.",
@@ -207,7 +207,7 @@
     "visual-analytics",
     "view"
   ],
-  "homepage": "https://github.com/promenade-lab/friction-topography",
+  "homepage": "https://github.com/promenade-pi/plugins/tree/main/friction-topography",
   "docs": [
     {
       "path": "README.md",

@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "run.promenade.alpha-miner",
   "name": "Alpha Miner (Classic)",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "author": "Promenade Team",
   "license": "MIT",
   "description": "van der Aalst's original 2004 discovery algorithm — the textbook starting point for process discovery, kept here mainly for teaching its own well-known limitations (no noise tolerance, no short loops, no duplicate labels). Heuristics Miner or Inductive Miner is the better default on a real, noisy log.",
@@ -88,8 +88,8 @@
     "doi": "10.1109/TKDE.2004.47",
     "bibtex": "@article{vanderaalst2004workflow,\n  title   = {Workflow Mining: Discovering Process Models from Event Logs},\n  author  = {van der Aalst, Wil M. P. and Weijters, Ton and Maruster, Laura},\n  journal = {IEEE Transactions on Knowledge and Data Engineering},\n  volume  = {16}, number = {9}, pages = {1128--1142}, year = {2004},\n  doi     = {10.1109/TKDE.2004.47}\n}"
   },
-  "homepage": "https://github.com/promenade-lab/alpha-miner",
-  "repository": "https://github.com/promenade-lab/alpha-miner",
+  "homepage": "https://github.com/promenade-pi/plugins/tree/main/alpha-miner-rs",
+  "repository": "https://github.com/promenade-pi/plugins/tree/main/alpha-miner-rs",
   "keywords": [
     "discovery",
     "petri-net",

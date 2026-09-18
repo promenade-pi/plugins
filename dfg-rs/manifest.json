@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "run.promenade.dfg-rs",
   "name": "Directly-Follows Graph (Rust)",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "István Koren",
   "license": "MIT",
   "description": "Discovers a directly-follows graph from an event log: for every pair of activities that ever occur back-to-back within a case, the number of times it happens, plus per-case start/end activities and per-activity frequency.",
@@ -67,8 +67,8 @@
       "orcid": "0000-0003-1350-6732"
     }
   ],
-  "homepage": "https://github.com/promenade-lab/dfg-rs",
-  "repository": "https://github.com/promenade-lab/dfg-rs",
+  "homepage": "https://github.com/promenade-pi/plugins/tree/main/dfg-rs",
+  "repository": "https://github.com/promenade-pi/plugins/tree/main/dfg-rs",
   "keywords": [
     "dfg",
     "directly-follows",

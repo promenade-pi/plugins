@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "run.promenade.heuristics-miner",
   "name": "Heuristics Miner",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "Promenade Team",
   "license": "MIT",
   "description": "Flexible Heuristics Miner: discovers a causal net or converts its AND/XOR grouping to an accepting Petri net with silent routing transitions, tolerant of noisy/infrequent behavior that would throw off Alpha Miner's exact footprint relations.",
@@ -178,8 +178,8 @@
     "text": "Weijters, A.J.M.M., van der Aalst, W.M.P., de Medeiros, A.K.A. (2006). Process Mining with the Heuristics Miner Algorithm. BETA Working Paper Series, WP 166.",
     "bibtex": "@techreport{weijters2006heuristics,\n  title  = {Process Mining with the Heuristics Miner Algorithm},\n  author = {Weijters, A. J. M. M. and van der Aalst, W. M. P. and de Medeiros, A. K. Alves},\n  institution = {Eindhoven University of Technology},\n  series = {BETA Working Paper Series},\n  number = {WP 166},\n  year   = {2006}\n}"
   },
-  "homepage": "https://github.com/promenade-lab/heuristics-miner",
-  "repository": "https://github.com/promenade-lab/heuristics-miner",
+  "homepage": "https://github.com/promenade-pi/plugins/tree/main/heuristics-miner-rs",
+  "repository": "https://github.com/promenade-pi/plugins/tree/main/heuristics-miner-rs",
   "keywords": [
     "discovery",
     "causal-net",

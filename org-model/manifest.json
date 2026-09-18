@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "org.promenade.org-model",
   "name": "Organizational Model Mining",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Promenade Team",
   "license": "MIT",
   "description": "Groups the people in a social network into roles, and names each one by the work its members do. Hierarchical clustering over the network's own weights, with the cut as a parameter rather than a guess.",
@@ -159,8 +159,8 @@
     "doi": "10.1016/j.dss.2008.07.002",
     "bibtex": "@article{song2008organizational,\n  title   = {Towards Comprehensive Support for Organizational Mining},\n  author  = {Song, Minseok and van der Aalst, Wil M. P.},\n  journal = {Decision Support Systems},\n  volume  = {46}, number = {1}, pages = {300--317}, year = {2008},\n  doi     = {10.1016/j.dss.2008.07.002}\n}"
   },
-  "homepage": "https://github.com/promenade-lab/org-model",
-  "repository": "https://github.com/promenade-lab/org-model",
+  "homepage": "https://github.com/promenade-pi/plugins/tree/main/org-model",
+  "repository": "https://github.com/promenade-pi/plugins/tree/main/org-model",
   "keywords": [
     "organizational-mining",
     "role-discovery",

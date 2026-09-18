@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4
+
+- Corrected the `homepage` and `repository` URLs. The plugins live in one
+  repository, [`promenade-pi/plugins`](https://github.com/promenade-pi/plugins),
+  not one repository per plugin under a `promenade-lab` organisation that was
+  never created. Metadata only — no functional change.
+
 ## 0.1.3
 
 - The 0.1.2 fix was incomplete: `defaultFromOptions` only resolves once an

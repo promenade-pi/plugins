@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "run.promenade.alignment",
   "name": "Conformance Checking",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "Promenade Team",
   "license": "MIT",
   "description": "Replays a log against a Petri net two ways: alignments (the cheapest explanation of every trace variant, with fitness and escaping-edges precision) and token-based replay (a linear walk that attributes missing and remaining tokens to individual places).",
@@ -184,8 +184,8 @@
     "doi": "10.1002/widm.1045",
     "bibtex": "@article{vanderaalst2012replaying,\n  title   = {Replaying History on Process Models for Conformance Checking and Performance Analysis},\n  author  = {van der Aalst, Wil M. P. and Adriansyah, Arya and van Dongen, Boudewijn F.},\n  journal = {WIREs Data Mining and Knowledge Discovery},\n  volume  = {2}, number = {2}, pages = {182--192}, year = {2012},\n  doi     = {10.1002/widm.1045}\n}"
   },
-  "homepage": "https://github.com/promenade-lab/alignment",
-  "repository": "https://github.com/promenade-lab/alignment",
+  "homepage": "https://github.com/promenade-pi/plugins/tree/main/alignment-rs",
+  "repository": "https://github.com/promenade-pi/plugins/tree/main/alignment-rs",
   "keywords": [
     "conformance",
     "alignment",

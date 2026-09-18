@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "org.promenade.resource-behavior",
   "name": "Resource Behavior",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Promenade Team",
   "license": "MIT",
   "description": "How each person in a log actually works: how much they do, how fast, how specialised, how often they batch or juggle several things at once, and whether they slow down when busy.",
@@ -191,8 +191,8 @@
     "doi": "10.1145/3041218",
     "bibtex": "@article{pika2017profiles,\n  title   = {Mining Resource Profiles from Event Logs},\n  author  = {Pika, Anastasiia and Leyer, Michael and Wynn, Moe T. and Fidge, Colin J. and ter Hofstede, Arthur H. M. and van der Aalst, Wil M. P.},\n  journal = {ACM Transactions on Management Information Systems},\n  volume  = {8}, number = {1}, pages = {1--30}, year = {2017},\n  doi     = {10.1145/3041218}\n}"
   },
-  "homepage": "https://github.com/promenade-lab/resource-behavior",
-  "repository": "https://github.com/promenade-lab/resource-behavior",
+  "homepage": "https://github.com/promenade-pi/plugins/tree/main/resource-behavior",
+  "repository": "https://github.com/promenade-pi/plugins/tree/main/resource-behavior",
   "keywords": [
     "organizational-mining",
     "resource",
