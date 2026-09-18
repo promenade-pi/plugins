@@ -1,0 +1,9 @@
+[package]
+name = "station-map-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Pure-Rust layout kernel for the Promenade station map: ranks, time depth, lane order and the orthogonal x/z router whose track allocation makes route overlap impossible by construction."
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }

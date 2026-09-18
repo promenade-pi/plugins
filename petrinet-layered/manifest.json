@@ -1,0 +1,62 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.petrinet-layered",
+  "name": "Petri Net",
+  "version": "0.4.0",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "React Flow renderer for accepting Petri nets, using the same ELK layered preset as the OCPN React Flow view. Initial places contain a token; final places have a double ring.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.petrinet-layered.view",
+      "label": "Petri Net",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "AcceptingPetriNet"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "title": "Flow direction",
+            "description": "Which way the net runs across the canvas. Left to right is the usual reading order; top to bottom suits a long chain of transitions in a tall panel.",
+            "enum": [
+              "RIGHT",
+              "DOWN"
+            ],
+            "enumLabels": [
+              "Left to right",
+              "Top to bottom"
+            ],
+            "default": "RIGHT",
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "AcceptingPetriNet"
+  ],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "keywords": [
+    "petri-net",
+    "react-flow",
+    "elkjs",
+    "layout",
+    "view"
+  ],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

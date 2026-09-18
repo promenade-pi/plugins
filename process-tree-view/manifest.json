@@ -1,0 +1,70 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.process-tree-view",
+  "name": "Process Tree View",
+  "version": "0.1.5",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Draws a process tree: operator nodes, activity leaves and silent steps, with the operator notation used by pm4py.",
+  "trusted": false,
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.process-tree-view.tree",
+      "label": "Process Tree",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "ProcessTree"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "orientation": {
+            "type": "string",
+            "title": "Orientation",
+            "enum": [
+              "vertical",
+              "horizontal"
+            ],
+            "default": "vertical",
+            "primary": true,
+            "cheap": true
+          },
+          "compactSilent": {
+            "type": "boolean",
+            "title": "Compact silent steps",
+            "description": "Shrinks and mutes τ (silent) leaves instead of hiding them. A τ is what makes an XOR branch optional or a loop 0..* vs 1..* — removing it from the drawing would misrepresent the model, not just declutter it.",
+            "default": false,
+            "cheap": true
+          },
+          "compact": {
+            "type": "boolean",
+            "title": "Compact spacing",
+            "default": false,
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "ProcessTree"
+  ],
+  "layouts": [],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "keywords": [
+    "process-tree",
+    "visualization",
+    "view"
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ]
+}

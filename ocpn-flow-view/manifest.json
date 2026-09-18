@@ -1,0 +1,66 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocpn-flow-view",
+  "name": "OCPN Viewer",
+  "version": "0.3.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "A second renderer for Object-Centric Petri Nets: React Flow for rendering, elkjs (layered algorithm, run synchronously — the sandboxed view boundary's CSP blocks Web Workers) for layout. Source places show a Play glyph, sink places a Stop glyph, in place of the host view's double-ring notation. Ships alongside the host's own OCPN view so the two renderers can be compared side by side.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.ocpn-flow-view.view",
+      "label": "OCPN",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "ObjectCentricPetriNet"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "title": "Flow direction",
+            "description": "Which way the net runs across the canvas. Left to right is the usual reading order; top to bottom suits a long chain of transitions in a tall panel.",
+            "enum": [
+              "RIGHT",
+              "DOWN"
+            ],
+            "enumLabels": [
+              "Left to right",
+              "Top to bottom"
+            ],
+            "default": "RIGHT",
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricPetriNet"
+  ],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "object-centric",
+    "petri-net",
+    "react-flow",
+    "elkjs",
+    "layout",
+    "view"
+  ],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

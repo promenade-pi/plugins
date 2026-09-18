@@ -1,0 +1,329 @@
+{
+  "manifestVersion": 1,
+  "id": "org.promenade.variant-metro",
+  "name": "Object-Centric Variant Metro",
+  "version": "0.3.4",
+  "author": "Promenade Lab example",
+  "license": "MIT",
+  "description": "An experimental metro map whose slider is the number of process variants, not the number of arcs. Process executions are extracted and grouped into variants exactly as the \"Cases & Variants (OCEL)\" plugin does (Adams et al., arXiv:2208.03235), every variant contributes its own object-centric directly-follows graph, and the map is laid out once over all of them. At the top of the slider you see the OC-DFG of the whole log; at the bottom, the single most frequent variant alone — and every position in between is the OC-DFG of exactly the k most frequent variants, on a layout that never moves.",
+  "apiVersion": "1",
+  "artifactTypes": [
+    {
+      "id": "OCVariantDFG",
+      "label": "Variant-Attributed OC-DFG",
+      "shortLabel": "VDFG",
+      "family": "model"
+    },
+    {
+      "id": "OCVariantMetro",
+      "label": "Object-Centric Variant Metro",
+      "shortLabel": "VMETRO",
+      "family": "model"
+    }
+  ],
+  "runtime": "wasm",
+  "pythonDeps": [],
+  "actions": [
+    {
+      "id": "org.promenade.variant-metro.variants",
+      "label": "Extract variants for the variant metro",
+      "description": "Extracts process executions, groups them into variants by activity-labelled graph isomorphism, and folds every variant back into one object-centric directly-follows graph in which each node and arc records the most frequent variant it first appears in. The internal first stage of \"Discover variant metro\".",
+      "internal": true,
+      "runtime": "pyodide",
+      "entry": "variants.py",
+      "memory": "high",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "variantDfg",
+          "type": "OCVariantDFG"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "extraction": {
+            "type": "string",
+            "title": "Extraction method",
+            "description": "Leading type: each object of the chosen type roots its own process execution (closest related objects are pulled in). Connected components: every transitively co-occurring object is grouped into one execution — parameter-free, but can produce a few very large executions on a highly entangled log.",
+            "enum": [
+              "leadingType",
+              "connectedComponents"
+            ],
+            "default": "leadingType"
+          },
+          "leadingType": {
+            "type": "string",
+            "title": "Leading object type",
+            "description": "Only used when extraction is Leading type. The most frequent object type is selected automatically.",
+            "default": "",
+            "defaultFromOptions": "first",
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            },
+            "showWhen": {
+              "param": "extraction",
+              "equals": "leadingType"
+            }
+          },
+          "scopeSharedObjects": {
+            "type": "boolean",
+            "title": "Scope shared objects to their closest case",
+            "description": "Only used when extraction is Leading type. A resource reused across many cases is still included in every case it touches, but only its events closest to that specific case are counted. Same deliberate deviation from the paper's Definition 4 that the Cases & Variants view documents, and on for the same reason.",
+            "default": true,
+            "showWhen": {
+              "param": "extraction",
+              "equals": "leadingType"
+            }
+          },
+          "maxVariants": {
+            "type": "integer",
+            "title": "Slider positions",
+            "description": "How many of the most frequent variants get a slider position of their own. Every remaining variant shares one final position, so the top of the slider is always the complete log — never a truncated model.",
+            "default": 25,
+            "minimum": 2,
+            "maximum": 100
+          },
+          "maxObjectTypes": {
+            "type": "integer",
+            "title": "Object type limit",
+            "description": "How many object types are drawn as lines, most frequent first. Variants are always computed over every object type in the log — this only limits what the map draws.",
+            "default": 12,
+            "minimum": 1,
+            "maximum": 50
+          },
+          "maxEvents": {
+            "type": "integer",
+            "title": "Max events per execution",
+            "description": "On a densely entangled object graph a single execution's true event set can approach the whole log. Executions are truncated to their chronologically-first N events past this limit — still a real, comparable graph, just a partial one.",
+            "default": 300,
+            "minimum": 50,
+            "maximum": 1000,
+            "multipleOf": 50
+          }
+        },
+        "required": [
+          "extraction",
+          "maxVariants",
+          "maxObjectTypes",
+          "maxEvents"
+        ]
+      }
+    },
+    {
+      "id": "org.promenade.variant-metro.discover",
+      "label": "Discover metro map with variant slider",
+      "description": "Lays the variant-attributed OC-DFG out as a metro map — the same layout the Metro Map plugin's OC-DFG basis uses, reused as a library, over the whole log at once so that filtering by variant never moves a station.",
+      "runtime": "wasm",
+      "entry": "promenade_variant_metro.js",
+      "wasm": "promenade_variant_metro_bg.wasm",
+      "scans": "OCVariantDFG",
+      "scanAction": "org.promenade.variant-metro.variants",
+      "kernel": {
+        "class": "VariantMetroConvert",
+        "abi": "value-finalize/1"
+      },
+      "memory": "low",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "variantMetro",
+          "type": "OCVariantMetro"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "extraction": {
+            "type": "string",
+            "title": "Extraction method",
+            "description": "What counts as one case. Leading type: each object of the chosen type roots its own process execution (closest related objects are pulled in). Connected components: every transitively co-occurring object is grouped into one execution — parameter-free, but can produce a few very large executions on a highly entangled log. Forwarded to the variant extraction, run internally.",
+            "enum": [
+              "leadingType",
+              "connectedComponents"
+            ],
+            "default": "leadingType",
+            "primary": true
+          },
+          "leadingType": {
+            "type": "string",
+            "title": "Leading object type",
+            "description": "Only used when extraction is Leading type. The most frequent object type is selected automatically.",
+            "default": "",
+            "defaultFromOptions": "first",
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            },
+            "showWhen": {
+              "param": "extraction",
+              "equals": "leadingType"
+            }
+          },
+          "scopeSharedObjects": {
+            "type": "boolean",
+            "title": "Scope shared objects to their closest case",
+            "description": "Only used when extraction is Leading type. A resource reused across many cases (a runway, a fuel truck) is still included in every case it touches, but only its events closest to that specific case are counted. A deliberate deviation from the paper's Definition 4, on by default for the same reason the Cases & Variants view defaults it on: the strict reading is close to unusable on a log with shared hub objects.",
+            "default": true,
+            "showWhen": {
+              "param": "extraction",
+              "equals": "leadingType"
+            }
+          },
+          "maxVariants": {
+            "type": "integer",
+            "title": "Slider positions",
+            "description": "How many of the most frequent variants get a slider position of their own. Every remaining variant shares one final position, so the top of the slider is always the complete log — never a truncated model. Raise it to step through a long tail one variant at a time, at the cost of a longer slider and a larger artifact.",
+            "default": 25,
+            "minimum": 2,
+            "maximum": 100
+          },
+          "maxObjectTypes": {
+            "type": "integer",
+            "title": "Object type limit",
+            "description": "How many object types are drawn as lines, most frequent first. Variants are always computed over every object type in the log (that is what the paper's case notion needs) — this only limits what the map draws. Hide individual types afterwards from the view's own legend.",
+            "default": 12,
+            "minimum": 1,
+            "maximum": 50
+          },
+          "maxEvents": {
+            "type": "integer",
+            "title": "Max events per execution",
+            "description": "On a densely entangled object graph (a shared hub object links a large part of the log together), a single execution's true event set can approach the whole log. Executions are truncated to their chronologically-first N events past this limit — still a real, comparable graph, just a partial one — to keep extraction from taking minutes.",
+            "default": 300,
+            "minimum": 50,
+            "maximum": 1000,
+            "multipleOf": 50
+          },
+          "rankTiebreak": {
+            "type": "string",
+            "title": "Rank tie-break",
+            "description": "Ranking (which row a station lands on, top to bottom) needs the whole model to be acyclic, but two object types can each flow acyclically through their own lifecycle and still form a cycle only once merged, purely from sharing stations — something has to give. \"Frequency\" (the default here) always keeps the busier direction and discounts the rarer one, so a rare cross-type wraparound can no longer outrank a station's own high-traffic through-line. \"Structural\" instead breaks that tie the way the metro map's older Petri-net basis does: fast and deterministic, but which of the two directions it keeps is an accident of station name order, unrelated to which one is actually the real flow.",
+            "enum": [
+              "frequency",
+              "structural"
+            ],
+            "default": "frequency"
+          }
+        },
+        "required": [
+          "extraction",
+          "maxVariants",
+          "maxObjectTypes",
+          "maxEvents",
+          "rankTiebreak"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "org.promenade.variant-metro.view",
+      "label": "Metro map with variant slider",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "OCVariantMetro"
+      ],
+      "livePreview": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "stationStyle": {
+            "type": "string",
+            "title": "Stations",
+            "description": "Draw activities as Budapest-metro interchange dots (with the name beside them) or as labelled rectangles.",
+            "enum": [
+              "dots",
+              "labels"
+            ],
+            "default": "dots",
+            "cheap": true
+          },
+          "edgeLabel": {
+            "type": "string",
+            "title": "Edge labels",
+            "description": "What to print on each arc. Both are counted over exactly the variants the slider is currently showing, not over the whole log: \"Frequency\" is the observed count, \"Performance\" the mean wait between the two activities.",
+            "enum": [
+              "none",
+              "frequency",
+              "performance"
+            ],
+            "default": "none",
+            "cheap": true
+          },
+          "animateFlow": {
+            "type": "boolean",
+            "title": "Animate flow",
+            "description": "Send a travelling pulse along every line in its process direction (source to target). Purely decorative; off by default.",
+            "default": false,
+            "cheap": true
+          },
+          "preserveStability": {
+            "type": "boolean",
+            "title": "Preserve layout stability",
+            "description": "On (default): adding a variant only ever reveals more detail, never reshuffles what is already shown — the filtered view is a monotone refinement of the whole log's own rank and lane. Off: every slider position is laid out fresh from only the currently visible stations and arcs, as if the other variants did not exist. Häge & Rehse, \"Mental Maps in Process Mining: Does Stabilizing DFGs Improve Process Analysis Performance?\" (BPM 2025), found no positive effect from stabilisation on process-analysis performance in their study.",
+            "default": true,
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog",
+    "OCVariantDFG",
+    "OCVariantMetro"
+  ],
+  "authors": [
+    {
+      "name": "Promenade Lab example"
+    }
+  ],
+  "citation": {
+    "text": "J. N. Adams, D. Schuster, S. Schmitz, G. Schuh, W. M. P. van der Aalst, \"Defining Cases and Variants for Object-Centric Event Data,\" arXiv:2208.03235, 2022.",
+    "url": "https://arxiv.org/abs/2208.03235"
+  },
+  "keywords": [
+    "object-centric",
+    "variants",
+    "process-executions",
+    "dfg",
+    "metro-map",
+    "schematic",
+    "experimental",
+    "rust",
+    "python",
+    "view"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

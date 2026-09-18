@@ -1,0 +1,22 @@
+{
+  "name": "metro-layout",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Schematic metro-map layout shared by the Metro Map and Variant Metro view plugins \u2014 the TypeScript counterpart of the metro-map-core crate.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./check": "./src/router.check.ts"
+  },
+  "scripts": {
+    "check": "node check.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}

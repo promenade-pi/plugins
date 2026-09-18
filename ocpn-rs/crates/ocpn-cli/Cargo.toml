@@ -1,0 +1,16 @@
+[package]
+name = "ocpn-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Debug harness: JSON traces per object type in, canonical OCPN JSON out"
+license = "MIT"
+
+[[bin]]
+name = "ocpn"
+path = "src/main.rs"
+
+[dependencies]
+ocpn-core = { path = "../ocpn-core" }
+ocpn-discovery = { path = "../ocpn-discovery" }
+inductive-miner-core = { path = "../../../inductive-miner-rs/crates/inductive-miner-core" }
+serde_json = "1"

@@ -1,0 +1,272 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocel-olap",
+  "name": "Object-Centric OLAP",
+  "version": "0.1.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "The four multi-dimensional operations on an object-centric event log: drill down and roll up along the object-type dimension, unfold and fold along the event-type dimension. Each produces a new OCEL — the same log seen at a different granularity — so every discovery, view and metric in the workspace can be run again on it and the two compared. This is how an object-centric log is analysed the way a cube is: not by filtering it down, but by changing what counts as a type.",
+  "runtime": "relational",
+  "actions": [
+    {
+      "id": "run.promenade.ocel-olap.drill-down",
+      "label": "Drill down an object type",
+      "description": "Splits one object type into finer sub-types named after an attribute's values: Order becomes (Order, gold) and (Order, standard). Objects whose attribute has no value keep the parent type, so nothing is placed in a category the data never claimed — and rolling up afterwards gives back exactly the log you started from.",
+      "runtime": "relational",
+      "apiVersion": "1",
+      "memory": "low",
+      "agent": {
+        "whenToUse": "To ask whether a process differs by a property of the objects it handles — priority, region, customer segment — without writing a filter per value.",
+        "notFor": "Filtering. Nothing is removed: the log keeps every event, object and relation, and only the type names change."
+      },
+      "queryFile": "sql/drill-down.sql",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectType": {
+            "type": "string",
+            "title": "Object type",
+            "description": "The type to split. Every other type is left alone.",
+            "default": "",
+            "primary": true,
+            "defaultFromOptions": "first",
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "attribute": {
+            "type": "string",
+            "title": "Attribute",
+            "description": "The object attribute whose values name the sub-types. A time-dependent attribute is read at its earliest recorded value — an object cannot be of two types at once.",
+            "default": "",
+            "defaultFromOptions": "first",
+            "optionsFrom": {
+              "sql": "SELECT name AS value, COUNT(DISTINCT object_id) AS n FROM {object_attr} WHERE value IS NOT NULL AND value <> '' GROUP BY 1 ORDER BY n DESC",
+              "countField": "n"
+            }
+          }
+        },
+        "required": [
+          "objectType",
+          "attribute"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.ocel-olap.roll-up",
+      "label": "Roll up an object type",
+      "description": "Collapses the sub-types of one object type back into it: (Order, gold) and (Order, standard) become Order again. The inverse of drilling down, and inverse exactly — a drilled log rolled up on the same type is the log it was drilled from.",
+      "runtime": "relational",
+      "apiVersion": "1",
+      "memory": "low",
+      "queryFile": "sql/roll-up.sql",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectType": {
+            "type": "string",
+            "title": "Parent type",
+            "description": "The type to collapse into. Every sub-type written as “(this type, …)” is rolled back up; anything else is left alone.",
+            "default": "",
+            "primary": true,
+            "optionsFrom": {
+              "sql": "SELECT DISTINCT regexp_extract(object_type, '^\\((.*?), ', 1) AS value, COUNT(*) AS n FROM {object} WHERE object_type LIKE '(%, %)' GROUP BY 1 ORDER BY n DESC",
+              "countField": "n"
+            }
+          }
+        },
+        "required": [
+          "objectType"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.ocel-olap.unfold",
+      "label": "Unfold an event type",
+      "description": "Splits one activity by the kind of object it touches: “pay” performed on a Customer becomes (pay, Customer), while the same activity with no such object keeps its name. That separation is what stops a model from merging two genuinely different pieces of work into one node.",
+      "runtime": "relational",
+      "apiVersion": "1",
+      "memory": "low",
+      "agent": {
+        "whenToUse": "When one activity name covers work on different kinds of object, and a discovered model merges them into a node that means two things."
+      },
+      "queryFile": "sql/unfold.sql",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "activity": {
+            "type": "string",
+            "title": "Activity",
+            "description": "The event type to split.",
+            "default": "",
+            "primary": true,
+            "defaultFromOptions": "first",
+            "optionsFrom": {
+              "sql": "SELECT activity AS value, COUNT(*) AS n FROM {event} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "activity"
+            }
+          },
+          "objectType": {
+            "type": "string",
+            "title": "Object type",
+            "description": "The kind of object that names the new event type.",
+            "default": "",
+            "defaultFromOptions": "first",
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "qualifier": {
+            "type": "string",
+            "title": "Only this relation",
+            "description": "Restricts which event-to-object relations count — “the customer it was paid for”, rather than any customer mentioned. Leave empty for any relation.",
+            "default": "",
+            "optionsFrom": {
+              "sql": "SELECT qualifier AS value, COUNT(*) AS n FROM {e2o} WHERE qualifier IS NOT NULL AND qualifier <> '' GROUP BY 1 ORDER BY n DESC",
+              "countField": "n"
+            }
+          }
+        },
+        "required": [
+          "activity",
+          "objectType"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.ocel-olap.fold",
+      "label": "Fold an event type",
+      "description": "Collapses the unfolded variants of one activity back into it: (pay, Customer) and (pay, Supplier) become pay again. The inverse of unfolding, and inverse exactly.",
+      "runtime": "relational",
+      "apiVersion": "1",
+      "memory": "low",
+      "queryFile": "sql/fold.sql",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "activity": {
+            "type": "string",
+            "title": "Parent activity",
+            "description": "The activity to collapse into. Every variant written as “(this activity, …)” is folded back; anything else is left alone.",
+            "default": "",
+            "primary": true,
+            "optionsFrom": {
+              "sql": "SELECT DISTINCT regexp_extract(activity, '^\\((.*?), ', 1) AS value, COUNT(*) AS n FROM {event} WHERE activity LIKE '(%, %)' GROUP BY 1 ORDER BY n DESC",
+              "countField": "n"
+            }
+          }
+        },
+        "required": [
+          "activity"
+        ]
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "Khayatbashi, S., Miri, N. and Jalali, A. (2025). Advancing Object-Centric Process Mining with Multi-Dimensional Data Operations. CAiSE Forum 2025 (arXiv:2412.00393). The four operations — drill down, roll up, unfold, fold — are the paper's, implemented as relational programs over the host's OCEL schema.",
+    "doi": "10.48550/arXiv.2412.00393",
+    "bibtex": "@inproceedings{khayatbashi2025olap,\n  title     = {Advancing Object-Centric Process Mining with Multi-Dimensional Data Operations},\n  author    = {Khayatbashi, Shahrzad and Miri, Najmeh and Jalali, Amin},\n  booktitle = {CAiSE Forum},\n  year      = {2025},\n  doi       = {10.48550/arXiv.2412.00393}\n}"
+  },
+  "keywords": [
+    "ocel",
+    "object-centric",
+    "olap",
+    "drill-down",
+    "roll-up",
+    "unfold",
+    "fold",
+    "sql"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/operations.md",
+      "title": "The operations"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

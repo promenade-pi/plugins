@@ -1,0 +1,22 @@
+{
+  "name": "metro-map-view",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "node build.js",
+    "check": "node check.js"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.11.3",
+    "html-to-image": "^1.11.13",
+    "metro-layout": "file:packages/metro-layout",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}

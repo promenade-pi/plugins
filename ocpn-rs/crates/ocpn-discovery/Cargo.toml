@@ -1,0 +1,10 @@
+[package]
+name = "ocpn-discovery"
+version = "0.1.0"
+edition = "2021"
+description = "OCPN discovery: per-object-type projection, Inductive Miner, tree-to-net, merge by activity, variable-arc detection. Pure Rust, no host, no browser."
+license = "MIT"
+
+[dependencies]
+ocpn-core = { path = "../ocpn-core" }
+inductive-miner-core = { path = "../../../inductive-miner-rs/crates/inductive-miner-core" }

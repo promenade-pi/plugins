@@ -1,0 +1,70 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Social network view harness</title>
+<style>
+  html, body { margin: 0; height: 100%; }
+  #root { height: 100%; }
+  #bar { position: fixed; right: 8px; top: 8px; z-index: 9; font: 12px system-ui; }
+</style>
+<div id="bar">
+  <select id="which"><option value="plugin">graph</option><option value="matrix">matrix</option></select>
+  <span id="status"></span>
+</div>
+<div id="root"></div>
+<script>
+  // A network with the shape that matters: a dense core, a loose periphery,
+  // one isolated person, and weights spanning two orders of magnitude.
+  const RESOURCES = Array.from({ length: 24 }, (_, i) => `res-${100 + i}`);
+  const edges = [];
+  let seed = 7;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  for (let i = 0; i < 10; i++) {
+    for (let j = 0; j < 10; j++) if (i !== j && rnd() < 0.6) edges.push({ from: i, to: j, w: rnd() });
+  }
+  for (let i = 10; i < 23; i++) edges.push({ from: i, to: (i % 9), w: rnd() * 0.05 });
+  const total = edges.reduce((s, e) => s + e.w, 0);
+  const payload = {
+    metric: 'handover', weightKind: 'share', directed: true,
+    resources: RESOURCES,
+    nodes: RESOURCES.map((_, i) => ({
+      resource: i, events: 10 + Math.round(rnd() * 500), cases: 5 + Math.round(rnd() * 100),
+      activities: 1 + Math.round(rnd() * 8), outWeight: 0, inWeight: 0,
+    })),
+    edges: edges.map((e) => ({ from: e.from, to: e.to, weight: e.w / total, raw: Math.round(e.w * 500) }))
+      .sort((a, b) => b.weight - a.weight),
+    stats: {
+      cases: 1000, events: 9000, eventsWithoutResource: 120, resourcesTotal: 24,
+      resourcesOmitted: 0, edgesBeforePruning: edges.length, selfLoopsDropped: 40,
+    },
+  };
+  for (const e of payload.edges) {
+    payload.nodes[e.from].outWeight += e.weight;
+    payload.nodes[e.to].inWeight += e.weight;
+  }
+
+  const listeners = {};
+  window.promenade = {
+    artifact: () => ({ id: 'harness', name: 'Harness network', type: 'SocialNetwork', tables: {}, value: payload }),
+    theme: () => ({ bg: '#fff', text: '#1c2027', 'text-dim': '#697386', border: '#e3e6ea', accent: '#0072B2', danger: '#d33' }),
+    color: (d, v) => '#7a8699',
+    select: (items) => { document.getElementById('status').textContent = ' selected: ' + items.map((i) => i.id).join(','); },
+    setParams: () => {},
+    sql: async () => ({ numRows: 0, columns: {} }),
+    on: (ev, fn) => { (listeners[ev] ||= []).push(fn); },
+    ready: () => { document.getElementById('status').textContent = ' ready'; },
+  };
+  window.__harness = {
+    payload,
+    params: (p) => (listeners.params || []).forEach((fn) => fn(p)),
+    resize: (w, h) => (listeners.resize || []).forEach((fn) => fn({ w, h })),
+  };
+
+  const which = new URLSearchParams(location.search).get('view') || 'plugin';
+  document.getElementById('which').value = which;
+  document.getElementById('which').onchange = (e) => {
+    location.search = `?view=${e.target.value}`;
+  };
+  const s = document.createElement('script');
+  s.src = `${which}.js`;
+  document.body.appendChild(s);
+</script>

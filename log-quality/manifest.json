@@ -1,0 +1,181 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.log-quality",
+  "name": "Log Quality",
+  "version": "0.2.3",
+  "license": "MIT",
+  "description": "Data-quality analysis for XES and OCEL logs. It reports specification, integrity, temporal, structural, qualifier, attribute and portability findings, following the check catalog of Ocelot's Quality linter, and proposes one-click repairs into a derived log.",
+  "runtime": "pyodide",
+  "entry": "plugin.py",
+  "pythonDeps": [
+    "pandas"
+  ],
+  "artifactTypes": [
+    {
+      "id": "LogQualityReport",
+      "label": "Log Quality Report",
+      "shortLabel": "QUALITY",
+      "family": "result"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.log-quality.analyze-xes",
+      "label": "Analyze Log Quality",
+      "memory": "medium",
+      "entryPoint": "xes",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "LogQualityReport"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "includeAttributes": {
+            "type": "boolean",
+            "title": "Profile attributes",
+            "description": "Detect missing values, sentinel values, identifier-like columns and likely PII. Disable for a faster structural-only report.",
+            "default": true,
+            "primary": true
+          },
+          "maxExamples": {
+            "type": "integer",
+            "title": "Examples per finding",
+            "description": "The report retains a bounded, deterministic sample of affected IDs while always keeping the full affected count.",
+            "default": 10,
+            "minimum": 3,
+            "maximum": 50
+          }
+        }
+      }
+    },
+    {
+      "id": "run.promenade.log-quality.analyze-ocel",
+      "label": "Analyze Log Quality",
+      "memory": "high",
+      "entryPoint": "ocel",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "LogQualityReport"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "includeAttributes": {
+            "type": "boolean",
+            "title": "Profile attributes",
+            "description": "Detect missing values, sentinel values, identifier-like columns and likely PII. Disable for a faster structural-only report.",
+            "default": true,
+            "primary": true
+          },
+          "maxExamples": {
+            "type": "integer",
+            "title": "Examples per finding",
+            "description": "The report retains a bounded, deterministic sample of affected IDs while always keeping the full affected count.",
+            "default": 10,
+            "minimum": 3,
+            "maximum": 50
+          }
+        }
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.log-quality.view",
+      "label": "Log quality report",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "LogQualityReport"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "title": "Show",
+            "enum": [
+              "all",
+              "error",
+              "warning",
+              "info"
+            ],
+            "default": "all",
+            "cheap": true
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "enum": [
+              "all",
+              "spec",
+              "integrity",
+              "temporal",
+              "structure",
+              "qualifier",
+              "attribute",
+              "portability"
+            ],
+            "default": "all",
+            "cheap": true
+          }
+        }
+      },
+      "derivesLogs": true
+    }
+  ],
+  "consumes": [
+    "TraditionalEventLog",
+    "ObjectCentricEventLog",
+    "LogQualityReport"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "repository": "https://github.com/istvank/ocelot",
+  "keywords": [
+    "quality",
+    "linter",
+    "validation",
+    "xes",
+    "ocel",
+    "data-quality"
+  ],
+  "readme": "README.md",
+  "author": "István Koren",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

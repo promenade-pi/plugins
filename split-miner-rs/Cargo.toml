@@ -1,0 +1,30 @@
+[workspace]
+members = ["crates/split-miner-core"]
+resolver = "2"
+
+# The wasm kernel is the workspace root package, so `wasm-pack build` and
+# `package.sh` find `pkg/` exactly where the other Promenade plugins put it.
+[package]
+name = "promenade-split-miner"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Split Miner: event log to BPMN, with concurrency, filtering and split/join discovery"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+split-miner-core = { path = "crates/split-miner-core" }
+# The BPMN payload types, so this kernel serializes bpmn-rs's own struct
+# rather than a second schema that agrees with it today.
+bpmn-core = { path = "../bpmn-rs/crates/bpmn-core" }
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

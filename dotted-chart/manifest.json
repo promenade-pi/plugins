@@ -1,0 +1,165 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.dotted-chart",
+  "name": "Dotted Chart",
+  "version": "0.6.5",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "A dotted chart of events over time: rows by case, activity, resource or object type; color by any of those; actual, relative or logical time; sortable rows. Ships as a worked example of the sandboxed third-party view boundary: opaque origin, no host DOM, no storage, data only through promenade.sql().",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.dotted-chart.chart",
+      "label": "Dotted chart",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "ObjectCentricEventLog",
+        "TraditionalEventLog"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "rowsBy": {
+            "type": "string",
+            "title": "Rows",
+            "description": "What each horizontal line represents. For OCEL logs, selecting an Object case notion below makes each object of that type a row; otherwise object types are aggregate rows.",
+            "enum": [
+              "case",
+              "activity",
+              "resource",
+              "objectType"
+            ],
+            "default": "case",
+            "primary": true
+          },
+          "objectType": {
+            "type": "string",
+            "title": "Object case notion (OCEL)",
+            "description": "Each object of this type becomes one dotted-chart row. The most frequent object type is selected automatically for a new view.",
+            "default": "",
+            "cheap": true,
+            "defaultFromOptions": "first",
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "colorBy": {
+            "type": "string",
+            "title": "Color by",
+            "enum": [
+              "activity",
+              "resource",
+              "lifecycle",
+              "objectType"
+            ],
+            "default": "activity"
+          },
+          "timeMode": {
+            "type": "string",
+            "title": "Time axis",
+            "description": "Actual: real timestamps. Relative: time since each row's own first event, so every row starts at zero. Logical: plain event order, ignoring real durations.",
+            "enum": [
+              "actual",
+              "relative",
+              "logical"
+            ],
+            "default": "actual",
+            "cheap": true
+          },
+          "sortRowsBy": {
+            "type": "string",
+            "title": "Sort rows by",
+            "enum": [
+              "firstEvent",
+              "lastEvent",
+              "duration",
+              "name"
+            ],
+            "default": "firstEvent",
+            "cheap": true
+          },
+          "sortDescending": {
+            "type": "boolean",
+            "title": "Descending",
+            "default": false,
+            "cheap": true
+          },
+          "sampleLimit": {
+            "type": "integer",
+            "title": "Max points",
+            "description": "Sampling keeps the canvas responsive on large logs.",
+            "default": 40000,
+            "minimum": 1000,
+            "maximum": 200000,
+            "multipleOf": 1000
+          },
+          "timeStart": {
+            "type": "string",
+            "title": "Time range",
+            "description": "Limits displayed events before sampling. Drag either handle or reset to the full log range.",
+            "default": "",
+            "cheap": true,
+            "control": "timeRange",
+            "rangeEnd": "timeEnd"
+          },
+          "timeEnd": {
+            "type": "string",
+            "title": "Until time",
+            "description": "End of the time-range slider.",
+            "default": "",
+            "cheap": true,
+            "control": "timeRangeEnd"
+          },
+          "dotSize": {
+            "type": "number",
+            "title": "Dot size",
+            "description": "Diameter in screen pixels. Smaller dots make dense timelines easier to read.",
+            "default": 2,
+            "minimum": 1,
+            "maximum": 10,
+            "multipleOf": 0.5,
+            "cheap": true
+          },
+          "showCaseIds": {
+            "type": "boolean",
+            "title": "Show row IDs",
+            "objectCentricTitle": "Show object IDs",
+            "description": "Reserves a left label column for case or object rows. Dense logs show a sampled set, including the first and last sorted row, with vertical ellipses for omitted rows.",
+            "default": true,
+            "cheap": true
+          },
+          "showHover": {
+            "type": "boolean",
+            "title": "Hover event details",
+            "description": "Show the nearest event's case, activity, and timestamp under the pointer. Off by default for dense charts.",
+            "default": false,
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog",
+    "TraditionalEventLog"
+  ],
+  "layouts": [],
+  "keywords": [
+    "dotted-chart",
+    "visualization",
+    "view"
+  ],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ]
+}

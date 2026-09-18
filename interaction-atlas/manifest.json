@@ -1,0 +1,189 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.interaction-atlas",
+  "name": "Interaction Atlas",
+  "version": "0.1.22",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Object-centric visual analytics for when and how objects co-occur over their lifecycles. An upper-triangular atlas opens into a lifecycle-interaction tomogram with exact rectangular or lasso-bin selection, inversion, side-by-side remainder comparison, and source-bound lasso cohorts consumable by compatible views.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.interaction-atlas.view",
+      "label": "Interaction Atlas",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "ObjectCentricEventLog",
+        "ObjectCentricExecutionPartition"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectTypes": {
+            "type": "array",
+            "title": "Object types",
+            "description": "Empty means every object type. This filter defines the visible atlas and analysis population.",
+            "default": [],
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} WHERE object_type IS NOT NULL GROUP BY 1 ORDER BY n DESC, object_type",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "activities": {
+            "type": "array",
+            "title": "Activities",
+            "description": "Empty means all activities. The filter is applied to interaction events.",
+            "default": [],
+            "optionsFrom": {
+              "sql": "SELECT activity AS value, COUNT(*) AS n FROM {event} WHERE activity IS NOT NULL GROUP BY 1 ORDER BY n DESC, activity",
+              "countField": "n",
+              "colorDomain": "activity"
+            }
+          },
+          "timeStart": {
+            "type": "string",
+            "title": "Time range",
+            "description": "Limits interaction events by calendar time.",
+            "default": "",
+            "cheap": true,
+            "control": "timeRange",
+            "rangeEnd": "timeEnd"
+          },
+          "timeEnd": {
+            "type": "string",
+            "title": "Until time",
+            "default": "",
+            "cheap": true,
+            "control": "timeRangeEnd"
+          },
+          "lifecycleBounds": {
+            "type": "string",
+            "title": "Lifecycle bounds",
+            "description": "Fixed uses complete source lifecycles and filters only interaction observations. Recomputed derives bounds from the filtered event population.",
+            "enum": [
+              "fixed",
+              "filtered"
+            ],
+            "enumLabels": [
+              "Fixed lifecycle bounds",
+              "Recomputed lifecycle bounds"
+            ],
+            "default": "fixed"
+          },
+          "weighting": {
+            "type": "string",
+            "title": "Interaction mass",
+            "description": "Equal event mass: each event contributes total mass one per object-type pair. Object-pair mass: every co-occurring object pair contributes equally, so large batches contribute multiple observations.",
+            "enum": [
+              "equal-event-mass",
+              "pair-mass"
+            ],
+            "enumLabels": [
+              "Equal event mass",
+              "Object-pair mass"
+            ],
+            "default": "equal-event-mass"
+          },
+          "binCount": {
+            "type": "integer",
+            "title": "Bin resolution",
+            "description": "The deterministic lifecycle-phase grid. Phase 1.0 belongs to the final bin.",
+            "default": 24,
+            "minimum": 8,
+            "maximum": 80,
+            "multipleOf": 4
+          },
+          "displayScale": {
+            "type": "string",
+            "title": "Display scale",
+            "description": "Visual-only scaling; it never changes the underlying interaction mass.",
+            "enum": [
+              "sqrt",
+              "linear",
+              "log"
+            ],
+            "default": "sqrt",
+            "cheap": true
+          },
+          "pairOrder": {
+            "type": "string",
+            "title": "Atlas ordering",
+            "description": "Similarity places object types with comparable interaction profiles next to one another; ties are deterministic.",
+            "enum": [
+              "volume",
+              "similarity",
+              "alphabetical"
+            ],
+            "default": "volume",
+            "cheap": true
+          },
+          "multiplicity": {
+            "type": "array",
+            "title": "Multiplicity",
+            "description": "Empty means all event multiplicities.",
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "optionsFrom": {
+              "sql": "SELECT 'one-to-one' AS value, 1 AS n UNION ALL SELECT 'one-to-many', 2 UNION ALL SELECT 'many-to-one', 3 UNION ALL SELECT 'many-to-many', 4",
+              "countField": "n"
+            }
+          },
+          "includeZeroDurationObjects": {
+            "type": "boolean",
+            "title": "Include zero-duration lifecycles",
+            "description": "When enabled, objects with one distinct timestamp contribute at phase 0.5.",
+            "default": true,
+            "cheap": true
+          },
+          "rippleWindowHours": {
+            "type": "integer",
+            "title": "Follow-ripple window",
+            "description": "Temporal context around selected contact objects. It counts same-object neighboring events before/after the anchors; it is descriptive and never causal.",
+            "default": 24,
+            "minimum": 1,
+            "maximum": 168,
+            "multipleOf": 1
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog",
+    "ObjectCentricExecutionPartition"
+  ],
+  "layouts": [],
+  "keywords": [
+    "object-centric",
+    "ocel",
+    "visual-analytics",
+    "interaction",
+    "lifecycle",
+    "tomogram"
+  ],
+  "docs": [
+    {
+      "path": "README.md",
+      "title": "Interaction Atlas"
+    },
+    {
+      "path": "docs/analytical-semantics.md",
+      "title": "Analytical semantics"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ]
+}

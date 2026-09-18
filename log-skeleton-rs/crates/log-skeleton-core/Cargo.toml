@@ -1,0 +1,16 @@
+[package]
+name = "log-skeleton-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Log skeleton discovery and conformance, independent of any host"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+# Four of the six relations are DECLARE templates under another name, so they
+# are evaluated by that plugin's crate rather than restated here: two copies of
+# "every a is eventually followed by b" is two chances to get it wrong.
+declare-core = { path = "../../../declare-rs/crates/declare-core" }
+
+[dev-dependencies]
+serde_json = "1"

@@ -1,0 +1,412 @@
+{
+ "objectTypes": [
+  "goods receipt",
+  "invoice receipt",
+  "material",
+  "payment",
+  "purchase_order",
+  "purchase_requisition",
+  "quotation"
+ ],
+ "nodes": [
+  {
+   "objectType": "goods receipt",
+   "activity": "Create Goods Receipt",
+   "count": 1941,
+   "starts": 1941,
+   "ends": 197
+  },
+  {
+   "objectType": "goods receipt",
+   "activity": "Create Invoice Receipt",
+   "count": 1941,
+   "starts": 0,
+   "ends": 0
+  },
+  {
+   "objectType": "goods receipt",
+   "activity": "Perform Two-Way Match",
+   "count": 1941,
+   "starts": 0,
+   "ends": 0
+  },
+  {
+   "objectType": "goods receipt",
+   "activity": "Execute Payment",
+   "count": 1941,
+   "starts": 0,
+   "ends": 1744
+  },
+  {
+   "objectType": "invoice receipt",
+   "activity": "Create Invoice Receipt",
+   "count": 927,
+   "starts": 927,
+   "ends": 0
+  },
+  {
+   "objectType": "invoice receipt",
+   "activity": "Perform Two-Way Match",
+   "count": 927,
+   "starts": 0,
+   "ends": 0
+  },
+  {
+   "objectType": "invoice receipt",
+   "activity": "Execute Payment",
+   "count": 927,
+   "starts": 0,
+   "ends": 927
+  },
+  {
+   "objectType": "material",
+   "activity": "Create Purchase Requisition",
+   "count": 1807,
+   "starts": 1807,
+   "ends": 0
+  },
+  {
+   "objectType": "material",
+   "activity": "Approve Purchase Requisition",
+   "count": 1499,
+   "starts": 0,
+   "ends": 1499
+  },
+  {
+   "objectType": "material",
+   "activity": "Delegate Purchase Requisition Approval",
+   "count": 308,
+   "starts": 0,
+   "ends": 308
+  },
+  {
+   "objectType": "payment",
+   "activity": "Execute Payment",
+   "count": 927,
+   "starts": 927,
+   "ends": 927
+  },
+  {
+   "objectType": "purchase_order",
+   "activity": "Create Purchase Order",
+   "count": 1598,
+   "starts": 1598,
+   "ends": 0
+  },
+  {
+   "objectType": "purchase_order",
+   "activity": "Approve Purchase Order",
+   "count": 1598,
+   "starts": 0,
+   "ends": 0
+  },
+  {
+   "objectType": "purchase_order",
+   "activity": "Create Goods Receipt",
+   "count": 1598,
+   "starts": 0,
+   "ends": 200
+  },
+  {
+   "objectType": "purchase_order",
+   "activity": "Execute Payment",
+   "count": 1598,
+   "starts": 0,
+   "ends": 1398
+  },
+  {
+   "objectType": "purchase_requisition",
+   "activity": "Create Purchase Requisition",
+   "count": 729,
+   "starts": 729,
+   "ends": 0
+  },
+  {
+   "objectType": "purchase_requisition",
+   "activity": "Approve Purchase Requisition",
+   "count": 607,
+   "starts": 0,
+   "ends": 0
+  },
+  {
+   "objectType": "purchase_requisition",
+   "activity": "Create Request for Quotation",
+   "count": 927,
+   "starts": 198,
+   "ends": 927
+  },
+  {
+   "objectType": "purchase_requisition",
+   "activity": "Delegate Purchase Requisition Approval",
+   "count": 122,
+   "starts": 0,
+   "ends": 0
+  },
+  {
+   "objectType": "quotation",
+   "activity": "Create Request for Quotation",
+   "count": 927,
+   "starts": 927,
+   "ends": 0
+  },
+  {
+   "objectType": "quotation",
+   "activity": "Create Purchase Order",
+   "count": 927,
+   "starts": 0,
+   "ends": 0
+  },
+  {
+   "objectType": "quotation",
+   "activity": "Approve Purchase Order",
+   "count": 927,
+   "starts": 0,
+   "ends": 927
+  }
+ ],
+ "edges": [
+  {
+   "objectType": "goods receipt",
+   "src": "Create Goods Receipt",
+   "dst": "Create Goods Receipt",
+   "freq": 1338,
+   "avgSecs": 106574.34977578475
+  },
+  {
+   "objectType": "goods receipt",
+   "src": "Create Goods Receipt",
+   "dst": "Create Invoice Receipt",
+   "freq": 1941,
+   "avgSecs": 182880.77279752705
+  },
+  {
+   "objectType": "goods receipt",
+   "src": "Create Invoice Receipt",
+   "dst": "Perform Two-Way Match",
+   "freq": 1841,
+   "avgSecs": 38564.25855513308
+  },
+  {
+   "objectType": "goods receipt",
+   "src": "Perform Two-Way Match",
+   "dst": "Execute Payment",
+   "freq": 1514,
+   "avgSecs": 290109.7093791281
+  },
+  {
+   "objectType": "goods receipt",
+   "src": "Perform Two-Way Match",
+   "dst": "Create Goods Receipt",
+   "freq": 427,
+   "avgSecs": 130023.37236533957
+  },
+  {
+   "objectType": "goods receipt",
+   "src": "Create Goods Receipt",
+   "dst": "Execute Payment",
+   "freq": 466,
+   "avgSecs": 280317.8111587983
+  },
+  {
+   "objectType": "goods receipt",
+   "src": "Execute Payment",
+   "dst": "Create Goods Receipt",
+   "freq": 236,
+   "avgSecs": 229470.7627118644
+  },
+  {
+   "objectType": "goods receipt",
+   "src": "Create Invoice Receipt",
+   "dst": "Create Goods Receipt",
+   "freq": 100,
+   "avgSecs": 45323.4
+  },
+  {
+   "objectType": "goods receipt",
+   "src": "Create Goods Receipt",
+   "dst": "Perform Two-Way Match",
+   "freq": 100,
+   "avgSecs": 62703.6
+  },
+  {
+   "objectType": "goods receipt",
+   "src": "Execute Payment",
+   "dst": "Execute Payment",
+   "freq": 457,
+   "avgSecs": 299237.9868708972
+  },
+  {
+   "objectType": "invoice receipt",
+   "src": "Create Invoice Receipt",
+   "dst": "Perform Two-Way Match",
+   "freq": 1640,
+   "avgSecs": 34341.4756097561
+  },
+  {
+   "objectType": "invoice receipt",
+   "src": "Perform Two-Way Match",
+   "dst": "Create Invoice Receipt",
+   "freq": 713,
+   "avgSecs": 66814.83870967742
+  },
+  {
+   "objectType": "invoice receipt",
+   "src": "Create Invoice Receipt",
+   "dst": "Create Invoice Receipt",
+   "freq": 301,
+   "avgSecs": 28437.00996677741
+  },
+  {
+   "objectType": "invoice receipt",
+   "src": "Perform Two-Way Match",
+   "dst": "Perform Two-Way Match",
+   "freq": 301,
+   "avgSecs": 5.780730897009967
+  },
+  {
+   "objectType": "invoice receipt",
+   "src": "Perform Two-Way Match",
+   "dst": "Execute Payment",
+   "freq": 927,
+   "avgSecs": 260648.86731391586
+  },
+  {
+   "objectType": "invoice receipt",
+   "src": "Execute Payment",
+   "dst": "Execute Payment",
+   "freq": 239,
+   "avgSecs": 306744.8535564854
+  },
+  {
+   "objectType": "material",
+   "src": "Create Purchase Requisition",
+   "dst": "Approve Purchase Requisition",
+   "freq": 1499,
+   "avgSecs": 291314.0493662442
+  },
+  {
+   "objectType": "material",
+   "src": "Create Purchase Requisition",
+   "dst": "Delegate Purchase Requisition Approval",
+   "freq": 308,
+   "avgSecs": 27856.753246753247
+  },
+  {
+   "objectType": "payment",
+   "src": "Execute Payment",
+   "dst": "Execute Payment",
+   "freq": 239,
+   "avgSecs": 306744.8535564854
+  },
+  {
+   "objectType": "purchase_order",
+   "src": "Create Purchase Order",
+   "dst": "Approve Purchase Order",
+   "freq": 1598,
+   "avgSecs": 314902.2653316646
+  },
+  {
+   "objectType": "purchase_order",
+   "src": "Approve Purchase Order",
+   "dst": "Create Goods Receipt",
+   "freq": 1598,
+   "avgSecs": 338945.8197747184
+  },
+  {
+   "objectType": "purchase_order",
+   "src": "Create Goods Receipt",
+   "dst": "Create Goods Receipt",
+   "freq": 2208,
+   "avgSecs": 150510.84239130435
+  },
+  {
+   "objectType": "purchase_order",
+   "src": "Create Goods Receipt",
+   "dst": "Execute Payment",
+   "freq": 1634,
+   "avgSecs": 405674.6878824969
+  },
+  {
+   "objectType": "purchase_order",
+   "src": "Execute Payment",
+   "dst": "Create Goods Receipt",
+   "freq": 236,
+   "avgSecs": 237689.74576271186
+  },
+  {
+   "objectType": "purchase_order",
+   "src": "Execute Payment",
+   "dst": "Execute Payment",
+   "freq": 358,
+   "avgSecs": 289438.49162011174
+  },
+  {
+   "objectType": "purchase_requisition",
+   "src": "Create Purchase Requisition",
+   "dst": "Approve Purchase Requisition",
+   "freq": 607,
+   "avgSecs": 291365.93080724875
+  },
+  {
+   "objectType": "purchase_requisition",
+   "src": "Approve Purchase Requisition",
+   "dst": "Create Request for Quotation",
+   "freq": 607,
+   "avgSecs": 332028.039538715
+  },
+  {
+   "objectType": "purchase_requisition",
+   "src": "Create Purchase Requisition",
+   "dst": "Delegate Purchase Requisition Approval",
+   "freq": 122,
+   "avgSecs": 27943.77049180328
+  },
+  {
+   "objectType": "purchase_requisition",
+   "src": "Delegate Purchase Requisition Approval",
+   "dst": "Create Request for Quotation",
+   "freq": 122,
+   "avgSecs": 307620
+  },
+  {
+   "objectType": "quotation",
+   "src": "Create Request for Quotation",
+   "dst": "Create Purchase Order",
+   "freq": 927,
+   "avgSecs": 112578.89967637541
+  },
+  {
+   "objectType": "quotation",
+   "src": "Create Purchase Order",
+   "dst": "Approve Purchase Order",
+   "freq": 1044,
+   "avgSecs": 224425.8620689655
+  },
+  {
+   "objectType": "quotation",
+   "src": "Approve Purchase Order",
+   "dst": "Create Purchase Order",
+   "freq": 117,
+   "avgSecs": 66677.94871794872
+  },
+  {
+   "objectType": "quotation",
+   "src": "Create Purchase Order",
+   "dst": "Create Purchase Order",
+   "freq": 554,
+   "avgSecs": 53052.6714801444
+  },
+  {
+   "objectType": "quotation",
+   "src": "Approve Purchase Order",
+   "dst": "Approve Purchase Order",
+   "freq": 554,
+   "avgSecs": 232493.50180505414
+  }
+ ],
+ "stats": {
+  "objectTypes": 7,
+  "activities": 10,
+  "edges": 34
+ }
+}

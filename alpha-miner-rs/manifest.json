@@ -1,0 +1,110 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.alpha-miner",
+  "name": "Alpha Miner (Classic)",
+  "version": "0.2.2",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "van der Aalst's original 2004 discovery algorithm — the textbook starting point for process discovery, kept here mainly for teaching its own well-known limitations (no noise tolerance, no short loops, no duplicate labels). Heuristics Miner or Inductive Miner is the better default on a real, noisy log.",
+  "runtime": "wasm",
+  "entry": "promenade_alpha_miner.js",
+  "wasm": "promenade_alpha_miner_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "AcceptingPetriNet",
+      "label": "Accepting Petri Net",
+      "shortLabel": "APN"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.alpha-miner.discover",
+      "label": "Alpha Miner (Classic)",
+      "memory": "low",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "net",
+          "type": "AcceptingPetriNet"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "minFrequency": {
+            "type": "integer",
+            "title": "Min. directly-follows frequency",
+            "description": "Edges below this count are dropped before the relations are derived.",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 20000,
+            "primary": true,
+            "cheap": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps only the most frequent activities. Alpha Miner is bounded to 64 and is not meaningful on hundreds.",
+            "default": 24,
+            "minimum": 2,
+            "maximum": 64
+          }
+        },
+        "required": [
+          "minFrequency"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.alpha-miner.netView",
+      "label": "Petri net",
+      "kind": "native",
+      "native": "core.petriNetView",
+      "appliesTo": [
+        "AcceptingPetriNet"
+      ]
+    }
+  ],
+  "kernel": {
+    "class": "AlphaScan",
+    "abi": "scan-finalize/1"
+  },
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "van der Aalst, W.M.P., Weijters, T., Maruster, L. (2004). Workflow Mining: Discovering Process Models from Event Logs. IEEE TKDE 16(9), 1128-1142.",
+    "doi": "10.1109/TKDE.2004.47",
+    "bibtex": "@article{vanderaalst2004workflow,\n  title   = {Workflow Mining: Discovering Process Models from Event Logs},\n  author  = {van der Aalst, Wil M. P. and Weijters, Ton and Maruster, Laura},\n  journal = {IEEE Transactions on Knowledge and Data Engineering},\n  volume  = {16}, number = {9}, pages = {1128--1142}, year = {2004},\n  doi     = {10.1109/TKDE.2004.47}\n}"
+  },
+  "homepage": "https://github.com/promenade-lab/alpha-miner",
+  "repository": "https://github.com/promenade-lab/alpha-miner",
+  "keywords": [
+    "discovery",
+    "petri-net",
+    "alpha-miner",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.heuristics-miner",
+  "name": "Heuristics Miner",
+  "version": "0.2.0",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Flexible Heuristics Miner: discovers a causal net or converts its AND/XOR grouping to an accepting Petri net with silent routing transitions, tolerant of noisy/infrequent behavior that would throw off Alpha Miner's exact footprint relations.",
+  "runtime": "wasm",
+  "entry": "promenade_heuristics_miner.js",
+  "wasm": "promenade_heuristics_miner_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "CausalNet",
+      "label": "Causal Net",
+      "shortLabel": "C-NET"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.heuristics-miner.discover",
+      "label": "Heuristics Miner",
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "net",
+          "type": "CausalNet"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "dependencyThreshold": {
+            "type": "number",
+            "title": "Dependency threshold",
+            "description": "How one-directional a→b must be, from 0 to just under 1, to count as a dependency.",
+            "default": 0.9,
+            "minimum": 0.5,
+            "maximum": 0.99,
+            "multipleOf": 0.01,
+            "primary": true,
+            "cheap": true
+          },
+          "minFrequency": {
+            "type": "integer",
+            "title": "Min. directly-follows frequency",
+            "description": "Edges below this count never become a dependency, however one-directional.",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 20000,
+            "cheap": true
+          },
+          "relativeToBest": {
+            "type": "number",
+            "title": "Keep graph connected, within",
+            "description": "An activity with no surviving edge keeps its single strongest candidate anyway, if it clears (threshold − this).",
+            "default": 0.05,
+            "minimum": 0,
+            "maximum": 0.5,
+            "multipleOf": 0.01,
+            "cheap": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps only the most frequent activities.",
+            "default": 60,
+            "minimum": 2,
+            "maximum": 300
+          }
+        },
+        "required": [
+          "dependencyThreshold",
+          "minFrequency"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.heuristics-miner.discoverPetriNet",
+      "label": "Heuristics Miner → Petri net",
+      "memory": "medium",
+      "kernel": {
+        "class": "HeuristicsPetriScan",
+        "abi": "scan-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "net",
+          "type": "AcceptingPetriNet"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "dependencyThreshold": {
+            "type": "number",
+            "title": "Dependency threshold",
+            "description": "How one-directional a→b must be, from 0 to just under 1, to count as a dependency.",
+            "default": 0.9,
+            "minimum": 0.5,
+            "maximum": 0.99,
+            "multipleOf": 0.01,
+            "primary": true,
+            "cheap": true
+          },
+          "minFrequency": {
+            "type": "integer",
+            "title": "Min. directly-follows frequency",
+            "description": "Edges below this count never become a dependency, however one-directional.",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 20000,
+            "cheap": true
+          },
+          "relativeToBest": {
+            "type": "number",
+            "title": "Keep graph connected, within",
+            "description": "An activity with no surviving edge keeps its single strongest candidate anyway, if it clears (threshold − this).",
+            "default": 0.05,
+            "minimum": 0,
+            "maximum": 0.5,
+            "multipleOf": 0.01,
+            "cheap": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps only the most frequent activities.",
+            "default": 60,
+            "minimum": 2,
+            "maximum": 300
+          }
+        },
+        "required": [
+          "dependencyThreshold",
+          "minFrequency"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.heuristics-miner.netView",
+      "label": "Causal net",
+      "kind": "native",
+      "native": "core.causalNetView",
+      "appliesTo": [
+        "CausalNet"
+      ]
+    }
+  ],
+  "kernel": {
+    "class": "HeuristicsScan",
+    "abi": "scan-finalize/1"
+  },
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "Weijters, A.J.M.M., van der Aalst, W.M.P., de Medeiros, A.K.A. (2006). Process Mining with the Heuristics Miner Algorithm. BETA Working Paper Series, WP 166.",
+    "bibtex": "@techreport{weijters2006heuristics,\n  title  = {Process Mining with the Heuristics Miner Algorithm},\n  author = {Weijters, A. J. M. M. and van der Aalst, W. M. P. and de Medeiros, A. K. Alves},\n  institution = {Eindhoven University of Technology},\n  series = {BETA Working Paper Series},\n  number = {WP 166},\n  year   = {2006}\n}"
+  },
+  "homepage": "https://github.com/promenade-lab/heuristics-miner",
+  "repository": "https://github.com/promenade-lab/heuristics-miner",
+  "keywords": [
+    "discovery",
+    "causal-net",
+    "heuristics-miner",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

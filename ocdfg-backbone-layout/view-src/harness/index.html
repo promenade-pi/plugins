@@ -1,0 +1,92 @@
+<!--
+  Verification harness for the sandboxed view, same-origin so its console and
+  DOM are reachable (a plugin frame's are not, which is why this exists).
+
+      cd view-src/harness && python3 -m http.server 5300
+      open http://localhost:5300/            normal mount
+      open http://localhost:5300/?hidden     mount into a zero-size box
+
+  The `?hidden` case is the one that matters. React Flow renders nodes without
+  measuring them but only draws an edge once its endpoints are measured, so a
+  graph initialised into a container with no box comes out as nodes with no
+  edges, permanently — React Flow's own error 004. A panel frame is mounted
+  exactly like that when it is behind another tab or is reparented off-screen,
+  which is why this failure has shown up across React-Flow-based views.
+  `useBoxReady` in plugin.tsx gates the mount on a real box; this page is how
+  that is checked. Expected: nothing rendered while hidden, then 24 nodes and
+  52 edges after "reveal".
+-->
+<!doctype html><meta charset=utf-8><title>backbone view harness</title>
+<style>
+  body { margin:0; font:12px system-ui; --bg:#fff; --bg-soft:#f7f7f8; --bg-sunken:#eee;
+         --border:#d5d7db; --text:#222; --text-dim:#777; --accent:#3b6fd4;
+         --accent-soft:#e7eefc; --danger:#c33; --warn:#d2544b; --ok:#2a8; }
+  #bar { padding:6px 10px; background:#111; color:#eee; display:flex; gap:8px; align-items:center }
+  #shell { position:relative }
+  #root { width:100vw; height:calc(100vh - 34px); background:var(--bg) }
+  /* Test B mounts inside a zero-size box, the condition a docked panel frame
+     is in while it is hidden or being reparented. */
+  body.hidden-mount #root { width:0; height:0; overflow:hidden }
+  #out { position:fixed; right:0; bottom:0; background:#000c; color:#0f0; font:11px ui-monospace;
+         padding:6px; max-width:52vw; white-space:pre-wrap; z-index:99 }
+</style>
+<div id=bar>
+  <span id=mode>mode: ?</span>
+  <button id=reveal>reveal (drop the zero-size box)</button>
+  <span id=verdict></span>
+</div>
+<div id=shell><div id=root></div></div>
+<pre id=out></pre>
+<script type="module">
+const log = (...a) => { const s = a.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ');
+  document.getElementById('out').textContent += s + '\n'; console.log('[harness]', s); };
+const hidden = new URLSearchParams(location.search).has('hidden');
+if (hidden) document.body.classList.add('hidden-mount');
+document.getElementById('mode').textContent = 'mode: ' + (hidden ? 'zero-size mount' : 'normal mount');
+
+const theme = {};
+for (const t of ['bg','bg-soft','bg-sunken','border','text','text-dim','accent','accent-soft','danger','warn','ok']) {
+  theme[t] = getComputedStyle(document.documentElement).getPropertyValue('--' + t).trim();
+}
+const palette = ['#e4572e','#2e86ab','#8a4fff','#17a398','#f4a259','#c33c8c','#5d7b1f','#8d6a4f'];
+const seen = new Map();
+const handlers = {};
+const payload = await (await fetch('./payload.json')).json();
+window.promenade = {
+  color: (_d, v) => { if (!seen.has(v)) seen.set(v, palette[seen.size % palette.length]); return seen.get(v); },
+  select: (items) => log('select', items),
+  artifact: () => ({ id: 'harness', name: 'harness', type: 'OCDFGBackboneLayout', tables: {}, value: payload }),
+  theme: () => theme,
+  setParams: (p) => log('setParams', p),
+  on: (event, fn) => { handlers[event] = fn; },
+  ready: () => log('ready'),
+};
+
+// The bundle is a classic-script IIFE, exactly as the plugin frame evals it.
+await new Promise((res, rej) => {
+  const s = document.createElement('script');
+  s.src = '../../build/view.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s);
+});
+
+function probe(tag) {
+  const paths = document.querySelectorAll('.react-flow__edge path').length;
+  const nodes = document.querySelectorAll('.react-flow__node').length;
+  log(tag, JSON.stringify({ nodes, edgePaths: paths, root: [root.clientWidth, root.clientHeight] }));
+  return { nodes, paths };
+}
+document.getElementById('reveal').onclick = () => {
+  document.body.classList.remove('hidden-mount');
+  handlers.resize?.({ w: window.innerWidth, h: window.innerHeight - 34 });
+  setTimeout(() => {
+    const r = probe('after reveal');
+    document.getElementById('verdict').textContent =
+      r.paths > 0 ? 'edges recovered' : 'EDGES STILL MISSING';
+  }, 700);
+};
+for (const ms of [80, 500, 1600]) setTimeout(() => probe('t+' + ms), ms);
+setTimeout(() => {
+  const r = probe('final');
+  document.getElementById('verdict').textContent =
+    r.paths > 0 ? 'edges drawn' : 'NO EDGES';
+}, 2200);
+</script>

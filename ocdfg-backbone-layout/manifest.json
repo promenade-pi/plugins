@@ -1,0 +1,310 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocdfg-backbone-layout",
+  "name": "OC-DFG Backbone Layout (IP)",
+  "version": "0.1.0",
+  "author": "Istv\u00e1n Koren",
+  "license": "MIT",
+  "description": "Lays out an Object-Centric Directly-Follows Graph with the backbone-based method of Lee, Song and van der Aalst: each object type gets its own vertical axis with its most frequent path drawn as a straight trunk, and node ranks come from an integer program that minimises upward edges instead of a heuristic. Solved in the browser by HiGHS through scipy.optimize.milp. Produces a positioned layout artifact, reports the layout-quality metrics both papers evaluate against, and can be switched back to the heuristic baseline for comparison.",
+  "runtime": "pyodide",
+  "entry": "plugin.py",
+  "pythonDeps": [
+    "numpy",
+    "scipy"
+  ],
+  "artifactTypes": [
+    {
+      "id": "OCDFGBackboneLayout",
+      "label": "OC-DFG Backbone Layout",
+      "shortLabel": "BBLAYOUT",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.ocdfg-backbone-layout.layout",
+      "label": "Backbone layout (IP)",
+      "description": "Computes backbone-based coordinates for an OC-DFG: one axis per object type, per-type backbones held straight, node ranks from an integer program that minimises precedence violations, and component placement balanced by a second integer program.",
+      "memory": "medium",
+      "agent": {
+        "whenToUse": "When an OC-DFG should be read as a process rather than as a graph: every object type gets its own vertical band with its dominant path as a straight trunk, and arcs running upwards against the flow are minimised. Also the action for comparing layout quality, since it reports back edges, crossings, edge length, orthogonality and balance.",
+        "notFor": "Not a discovery action: it needs an existing OCDFG artifact and never changes which activities or arcs it contains. For a quick look at a freshly discovered OC-DFG, the React Flow view's ELK layout needs no separate run.",
+        "examples": [
+          "Lay out this OC-DFG with the backbone method and tell me how many back edges it has",
+          "Run it twice, once with rankMethod ip and once with heuristic, and compare the metrics",
+          "mainObjectType 'Order' to make Order the layout's central spine"
+        ]
+      },
+      "inputs": [
+        {
+          "name": "ocdfg",
+          "type": "OCDFG",
+          "required": true,
+          "label": "an Object-Centric Directly-Follows Graph"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "layout",
+          "type": "OCDFGBackboneLayout"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "backbone": {
+            "type": "string",
+            "title": "Backbone",
+            "description": "How each object type's backbone is derived. Both papers take it from the most frequent variant of the event log, which an aggregated OC-DFG no longer contains; these are the two graph-level substitutes the journal paper explicitly allows. \"Most frequent path\" walks from the type's start always taking the busiest transition it has not visited. \"Heaviest path\" searches for the longest run of busy transitions instead, which finds a longer trunk on graphs whose dominant path branches early.",
+            "enum": [
+              "modal",
+              "heaviest"
+            ],
+            "default": "modal"
+          },
+          "mainObjectType": {
+            "type": "string",
+            "title": "Main object type",
+            "description": "The type whose layout the merge starts from, and whose trunk becomes the layout's central spine. Empty picks the type performing the most activities that more than one type performs, as the paper does.",
+            "default": ""
+          },
+          "rankMethod": {
+            "type": "string",
+            "title": "Rank assignment",
+            "description": "\"Integer program\" is the method under test: it minimises precedence violations and layout height together, and is what removes unnecessary upward edges. \"Heuristic\" is the comparison baseline \u2014 orient every arc, then longest-path layering \u2014 which is also used automatically on graphs too large for the program.",
+            "enum": [
+              "ip",
+              "heuristic"
+            ],
+            "default": "ip",
+            "primary": true
+          },
+          "rankObjective": {
+            "type": "string",
+            "title": "Precedence penalty",
+            "description": "\"Squared\" is the journal paper's objective: it makes one two-rank violation cost more than two one-rank violations, which is what pulls a mutually dependent activity pair onto a single rank. \"Linear\" is the earlier BPM paper's objective, which is indifferent between the two and produces a much smaller program.",
+            "enum": [
+              "squared",
+              "linear"
+            ],
+            "default": "squared"
+          },
+          "rankEdgeWeight": {
+            "type": "string",
+            "title": "Arc importance",
+            "description": "What makes an activity pair worth keeping in flow order. \"Object types\" weighs a pair by how many types traverse it \u2014 the object-centric reading of a central transition. \"Frequency\" weighs it by how many objects did. \"Uniform\" treats every pair alike.",
+            "enum": [
+              "objectTypes",
+              "frequency",
+              "uniform"
+            ],
+            "default": "objectTypes"
+          },
+          "allowHorizontalEdges": {
+            "type": "boolean",
+            "title": "Allow horizontal edges",
+            "description": "Let a mutually dependent activity pair \u2014 one where both directions occur, so neither precedes the other \u2014 share a rank. This is the journal paper's second fix: it costs fewer ranks and fewer back edges, and reads the cycle correctly as unordered. Turning it off reproduces the older behaviour, where every arc must change rank.",
+            "default": true
+          },
+          "componentBalancing": {
+            "type": "string",
+            "title": "Component balancing",
+            "description": "How the parts of the graph hanging off a backbone are divided between its left and right. \"Integer program\" attains the smallest possible imbalance; \"Greedy\" is the benchmark's descending-size heuristic, which does not; \"Off\" puts everything on the right.",
+            "enum": [
+              "ip",
+              "greedy",
+              "off"
+            ],
+            "default": "ip"
+          },
+          "axisWeight": {
+            "type": "number",
+            "title": "Axis fidelity weight",
+            "description": "How strongly the axis order should reproduce which object types share activities, when choosing where to insert each type. The paper leaves this weight unanalysed.",
+            "default": 0.5,
+            "minimum": 0,
+            "maximum": 1
+          },
+          "crossingWeight": {
+            "type": "number",
+            "title": "Crossing weight",
+            "description": "How strongly edge crossings count against a candidate axis position, against axis fidelity.",
+            "default": 0.5,
+            "minimum": 0,
+            "maximum": 1
+          },
+          "crossMinIterations": {
+            "type": "integer",
+            "title": "Crossing-minimisation sweeps",
+            "description": "Passes of adjacent same-axis swapping. Swaps are restricted to one object type axis so the type bands stay intact.",
+            "default": 8,
+            "minimum": 0,
+            "maximum": 40
+          },
+          "positioningIterations": {
+            "type": "integer",
+            "title": "Positioning iterations",
+            "description": "Rounds of median placement and horizontal compaction. The round with the shortest total edge length wins.",
+            "default": 8,
+            "minimum": 1,
+            "maximum": 40
+          },
+          "rankSpacing": {
+            "type": "number",
+            "title": "Rank spacing",
+            "description": "Vertical distance between adjacent ranks, in pixels.",
+            "default": 110,
+            "minimum": 40,
+            "maximum": 400
+          },
+          "orderSpacing": {
+            "type": "number",
+            "title": "Order spacing",
+            "description": "Horizontal distance between adjacent order columns before compaction, in pixels.",
+            "default": 170,
+            "minimum": 40,
+            "maximum": 600
+          },
+          "minGap": {
+            "type": "number",
+            "title": "Minimum node gap",
+            "description": "Smallest horizontal gap left between two nodes on the same rank, in pixels.",
+            "default": 26,
+            "minimum": 2,
+            "maximum": 200
+          },
+          "timeLimitSecs": {
+            "type": "number",
+            "title": "Solver time limit",
+            "description": "Seconds allowed per integer program. On timeout the best solution found so far is used and reported as such, rather than failing the run.",
+            "default": 20,
+            "minimum": 1,
+            "maximum": 600
+          },
+          "maxPairsForIp": {
+            "type": "integer",
+            "title": "Integer-program ceiling",
+            "description": "Above this many distinct activity pairs, rank assignment falls back to the heuristic without attempting the program. Raise it, and the time limit with it, to push a large graph through the program anyway.",
+            "default": 1200,
+            "minimum": 50,
+            "maximum": 20000
+          }
+        },
+        "required": [
+          "backbone",
+          "rankMethod",
+          "rankObjective",
+          "componentBalancing"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.ocdfg-backbone-layout.view",
+      "label": "Backbone layout",
+      "kind": "sandboxed",
+      "entry": "view.js",
+      "appliesTo": [
+        "OCDFGBackboneLayout"
+      ],
+      "primary": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "edgeStyle": {
+            "type": "string",
+            "title": "Arc drawing",
+            "description": "\"Polyline\" draws exactly the segments the layout measured, so the reported edge length and orthogonality describe what is on screen. \"Curved\" is the spline finish of the reference implementation. \"Orthogonal\" snaps every segment to the grid, which reads cleanly but no longer matches the orthogonality figure.",
+            "enum": [
+              "polyline",
+              "curved",
+              "orthogonal"
+            ],
+            "default": "polyline",
+            "cheap": true
+          },
+          "highlight": {
+            "type": "string",
+            "title": "Emphasise",
+            "description": "Which arcs are drawn at full strength: the object type backbones, the back edges running against the flow, or neither.",
+            "enum": [
+              "backbone",
+              "backEdges",
+              "none"
+            ],
+            "default": "backbone",
+            "cheap": true
+          },
+          "edgeLabels": {
+            "type": "string",
+            "title": "Arc labels",
+            "description": "Label each arc with the number of objects that traversed it, or the mean waiting time between the two activities where the OC-DFG carries one.",
+            "enum": [
+              "none",
+              "frequency",
+              "duration"
+            ],
+            "default": "none",
+            "cheap": true
+          },
+          "showRoutingNodes": {
+            "type": "boolean",
+            "title": "Show routing nodes",
+            "description": "Draw the virtual nodes the layout inserts so that every arc spans exactly one rank. They are a layout artefact, not part of the process, but they show what the rank assignment actually did.",
+            "default": false,
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "OCDFG",
+    "OCDFGBackboneLayout"
+  ],
+  "recommends": [
+    {
+      "id": "run.promenade.ocdfg-flow-view",
+      "reason": "Draws the same OC-DFG with a general layered graph layout, which is the comparison the backbone method is arguing against."
+    }
+  ],
+  "authors": [
+    {
+      "name": "Istv\u00e1n Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "Method: D. Lee, M. Song, W.M.P. van der Aalst, \"Layouting Object-Centric Directly Follows Graphs\", BPM 2025, LNBIP 564, pp. 204-220; and D. Lee, M. Song, W.M.P. van der Aalst, \"An optimized backbone-based process layout generation method using integer programming and heuristics to enhance user comprehension\", Data & Knowledge Engineering 164 (2026) 102601. This plugin is an independent implementation, not by the method's authors.",
+    "doi": "10.1016/j.datak.2026.102601",
+    "url": "https://doi.org/10.1016/j.datak.2026.102601"
+  },
+  "repository": "https://github.com/deoksanglee/BackboneLayoutIP",
+  "keywords": [
+    "object-centric",
+    "ocdfg",
+    "layout",
+    "backbone",
+    "integer-programming",
+    "visualization",
+    "sugiyama",
+    "milp"
+  ],
+  "docs": [
+    {
+      "path": "README.md",
+      "title": "Read me"
+    },
+    {
+      "path": "docs/method.md",
+      "title": "Method and paper correspondence"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

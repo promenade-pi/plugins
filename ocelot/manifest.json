@@ -1,0 +1,81 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocelot",
+  "name": "OCEL 2.0 Inspector",
+  "version": "0.2.6",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Ocelot (rwth-pads/ocelot) ported into an OCEL 2.0 inspector: an object-type / event-type relationship graph, paginated Objects and Events tables with a per-object lifecycle and relations explorer, and a cleaned-up OCEL overview standing in for the core one. Every table pages real LIMIT/OFFSET SQL — nothing is loaded into the browser wholesale.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.ocelot.overview",
+      "label": "Overview",
+      "entry": "overview.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ],
+      "primary": true
+    },
+    {
+      "id": "run.promenade.ocelot.object-types",
+      "label": "Object Types",
+      "entry": "object-types.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ]
+    },
+    {
+      "id": "run.promenade.ocelot.objects",
+      "label": "Objects",
+      "entry": "objects.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ]
+    },
+    {
+      "id": "run.promenade.ocelot.event-types",
+      "label": "Event Types",
+      "entry": "event-types.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ]
+    },
+    {
+      "id": "run.promenade.ocelot.events",
+      "label": "Events",
+      "entry": "events.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ]
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog"
+  ],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "object-centric",
+    "ocel",
+    "objects",
+    "events",
+    "graph",
+    "react-flow",
+    "elkjs",
+    "view"
+  ],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

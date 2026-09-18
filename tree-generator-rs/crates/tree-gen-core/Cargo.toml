@@ -1,0 +1,17 @@
+[package]
+name = "tree-gen-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Random process tree generation, independent of any host"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+serde_json = "1"
+# The invariants convert every generated tree to a Petri net and check that it
+# is sound. Both crates belong to other plugins and neither knows about this
+# one, which is what makes the check independent rather than self-confirming.
+bpmn-core = { path = "../../../bpmn-rs/crates/bpmn-core" }
+soundness-core = { path = "../../../soundness-rs/crates/soundness-core" }

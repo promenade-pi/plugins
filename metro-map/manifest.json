@@ -1,0 +1,234 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.metro-map",
+  "name": "Metro Map",
+  "version": "0.19.5",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Renders an object-centric process as a transit-schematic 'metro map': activities become stations shared across object types, object types become color-coded lines routed with 45°-only turns and consistent parallel lane order, top to bottom in roughly process time order. Discover it from an Object-Centric Petri Net (choice/parallelism drawn as X/+ gateways read off the net structure) or from an Object-Centric Directly-Follows Graph (no gateways, but real per-station/per-arc frequencies and a complexity slider). Both mine their upstream model transparently as an internal stage.",
+  "apiVersion": "1",
+  "artifactTypes": [
+    {
+      "id": "OCMetroMap",
+      "label": "Object-Centric Metro Map",
+      "shortLabel": "METRO",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.metro-map.discover",
+      "label": "Discover metro map",
+      "runtime": "wasm",
+      "entry": "promenade_metro_map.js",
+      "wasm": "promenade_metro_map_bg.wasm",
+      "scans": "ObjectCentricPetriNet",
+      "scanAction": "run.promenade.ocpn.discover",
+      "kernel": {
+        "class": "MetroMapConvert",
+        "abi": "value-finalize/1"
+      },
+      "memory": "low",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "metroMap",
+          "type": "OCMetroMap"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectTypes": {
+            "type": "array",
+            "title": "Object types",
+            "description": "Which object types participate in discovery. Empty means every object type present in the log.",
+            "default": [],
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "minerVariant": {
+            "type": "string",
+            "title": "Miner variant",
+            "description": "IM guarantees every object type's lifecycle replays every trace it was discovered from. IMf gives that up in exchange for ignoring infrequent behavior, and is the usual choice on a real log. Forwarded to run.promenade.ocpn's own discovery, run internally.",
+            "enum": [
+              "IMf",
+              "IM"
+            ],
+            "default": "IM",
+            "primary": true
+          },
+          "noiseThreshold": {
+            "type": "number",
+            "title": "Noise threshold",
+            "description": "IMf only. How weak a path has to be, relative to the strongest alternative, before it is treated as noise. Applied independently within each object type's own lifecycle.",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01
+          }
+        },
+        "required": [
+          "minerVariant",
+          "noiseThreshold"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.metro-map.discover-dfg",
+      "label": "Discover metro map (OC-DFG)",
+      "runtime": "wasm",
+      "entry": "promenade_metro_map.js",
+      "wasm": "promenade_metro_map_bg.wasm",
+      "scans": "OCDFG",
+      "scanAction": "core.discover.ocdfg",
+      "kernel": {
+        "class": "MetroMapDfgConvert",
+        "abi": "value-finalize/1"
+      },
+      "memory": "low",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "metroMap",
+          "type": "OCMetroMap"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "maxObjectTypes": {
+            "type": "integer",
+            "title": "Object type limit",
+            "description": "Discovery keeps only the most frequent object types, up to this many. Forwarded to core.discover.ocdfg, run internally. Hide individual types afterwards from the view's own legend.",
+            "default": 12,
+            "minimum": 1,
+            "maximum": 50,
+            "primary": true
+          },
+          "rankTiebreak": {
+            "type": "string",
+            "title": "Rank tie-break",
+            "description": "Ranking (which row a station lands on, top to bottom) needs the whole model to be acyclic, but two object types can each flow acyclically through their own lifecycle and still form a cycle only once merged, purely from sharing stations — something has to give. \"Frequency\" (default) always keeps the busier direction and discounts the rarer one, so a rare cross-type wraparound can no longer outrank a station's own high-traffic through-line. \"Structural\" instead breaks that tie the way every diagram used to: fast and deterministic, but which of the two directions it keeps is an accident of station name order, unrelated to which one is actually the real flow.",
+            "enum": [
+              "frequency",
+              "structural"
+            ],
+            "default": "frequency"
+          }
+        }
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.metro-map.view",
+      "label": "Metro map",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "OCMetroMap"
+      ],
+      "livePreview": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "stationStyle": {
+            "type": "string",
+            "title": "Stations",
+            "description": "Draw activities as Budapest-metro interchange dots (with the name beside them) or as labeled rectangles.",
+            "enum": [
+              "dots",
+              "labels"
+            ],
+            "default": "dots",
+            "cheap": true
+          },
+          "edgeLabel": {
+            "type": "string",
+            "title": "Edge labels",
+            "description": "What to print on each arc. \"Frequency\" is the observed count; \"Performance\" is the mean wait between the two activities. Only shown for a map discovered from an OC-DFG — a Petri net is a structural model whose arcs carry no counts or timestamps. \"Performance\" needs core.discover.ocdfg 0.2.0 or later: re-discover any OC-DFG map made before that.",
+            "enum": [
+              "none",
+              "frequency",
+              "performance"
+            ],
+            "default": "none",
+            "cheap": true,
+            "showWhen": {
+              "artifactMeta": "basis",
+              "equals": "directlyFollows"
+            }
+          },
+          "animateFlow": {
+            "type": "boolean",
+            "title": "Animate flow",
+            "description": "Send a traveling pulse along every line in its process direction (source to target). Purely decorative; off by default.",
+            "default": false,
+            "cheap": true
+          },
+          "preserveStability": {
+            "type": "boolean",
+            "title": "Preserve layout stability",
+            "description": "On (default): moving the complexity slider only ever reveals more detail, never reshuffles what is already shown — the filtered view is a monotone refinement of the full model's own rank and lane. Off: every slider position is laid out fresh from only the currently visible stations and arcs, as if the hidden ones did not exist. Häge & Rehse, \"Mental Maps in Process Mining: Does Stabilizing DFGs Improve Process Analysis Performance?\" (BPM 2025), found no positive effect from stabilisation on process-analysis performance in their study.",
+            "default": true,
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog",
+    "ObjectCentricPetriNet",
+    "OCDFG",
+    "OCMetroMap"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "object-centric",
+    "petri-net",
+    "bpmn",
+    "layout",
+    "schematic",
+    "rust",
+    "view"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

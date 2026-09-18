@@ -1,0 +1,130 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.totem",
+  "name": "TOTeM Discovery",
+  "version": "0.1.4",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Discovers a Temporal Object Type Model (TOTeM): a type-level graph of an OCEL log's object types, connected by their most precise event-cardinality, log-cardinality and temporal-containment relations at a chosen support threshold. Ported from Grkmr/TOTeM (https://github.com/Grkmr/TOTeM).",
+  "runtime": "pyodide",
+  "entry": "plugin.py",
+  "pythonDeps": [
+    "numpy",
+    "pandas",
+    "scipy",
+    "networkx",
+    "lxml",
+    "matplotlib",
+    "pytz",
+    "tqdm",
+    "pyarrow",
+    "graphviz",
+    "deprecation",
+    "intervaltree",
+    "sortedcontainers",
+    "pm4py"
+  ],
+  "artifactTypes": [
+    {
+      "id": "TotemModel",
+      "label": "Temporal Object Type Model",
+      "shortLabel": "TOTeM",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.totem.discover",
+      "label": "Discover TOTeM",
+      "memory": "high",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "totem",
+          "type": "TotemModel"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "tau": {
+            "type": "number",
+            "title": "Support Threshold (τ)",
+            "description": "Minimum fraction of observations supporting a cardinality or temporal relation for it to be included. Higher values filter more noise.",
+            "default": 0.9,
+            "minimum": 0.01,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "primary": true
+          },
+          "maxEvents": {
+            "type": "integer",
+            "title": "Event limit",
+            "description": "A safety ceiling, not a normal control: the default covers any log this can comfortably mine in a browser tab. When a run hits it, the result is flagged as truncated. Changing it re-runs the expensive fetch stage.",
+            "default": 2000000,
+            "minimum": 1000,
+            "maximum": 5000000,
+            "multipleOf": 1000,
+            "maxFrom": "events"
+          }
+        },
+        "required": [
+          "tau",
+          "maxEvents"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.totem.view",
+      "label": "TOTeM",
+      "kind": "sandboxed",
+      "entry": "view.js",
+      "appliesTo": [
+        "TotemModel"
+      ],
+      "primary": true
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog",
+    "TotemModel"
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "Algorithm and TOTeM notation from Grkmr/TOTeM.",
+    "url": "https://github.com/Grkmr/TOTeM"
+  },
+  "keywords": [
+    "discovery",
+    "object-centric",
+    "totem",
+    "temporal",
+    "cardinality",
+    "pm4py",
+    "python",
+    "react-flow"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

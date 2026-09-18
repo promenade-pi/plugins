@@ -1,0 +1,22 @@
+{
+  "name": "ocdfg-backbone-layout-view",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.cjs",
+    "test": "node --test",
+    "check": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json && node --test"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.11.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  }
+}

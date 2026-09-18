@@ -1,0 +1,263 @@
+{
+  "manifestVersion": 1,
+  "apiVersion": "1",
+  "id": "run.promenade.metro-station",
+  "name": "Metro Station",
+  "version": "0.2.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "The metro-map metaphor taken into the third dimension, the way a station atlas draws Shinjuku: activities are circular platforms, object types are colored routes, horizontal position is process order — and vertical position is accumulated elapsed time. A wait is therefore a literal descent, drawn as a translucent elevator shaft for a long one and a staircase for a short one, so the two-day gap before payment is a two-story drop rather than a number on an arc. A lift car runs in each shaft, and it only ever descends: on this diagram height is elapsed time, so a car climbing back would be a case traveling backwards through it — it beams to the top with a flash instead. Depth is a genuinely new axis rather than a second encoding of object type, which is why color stays free to mean what it means everywhere else in Promenade. Interactive: orbit it, flatten it back to an ordinary 2D metro map, and switch the depth axis between linear and logarithmic. Rendered with three.js WebGPURenderer, falling back to WebGL 2.",
+  "artifactTypes": [
+    {
+      "id": "OCStationMap",
+      "label": "Object-Centric Station Map",
+      "shortLabel": "STATION",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.metro-station.discover",
+      "label": "Discover station map",
+      "description": "Builds the station plan from an OC-DFG mined internally from the log: ranks give horizontal order, the longest path in seconds gives depth, and an orthogonal router allocates every route a track in its corridor so no two routes are ever drawn on the same line. Highly abstracted variants are the intended use — a station atlas of sixty platforms is not an atlas.",
+      "agent": {
+        "whenToUse": "Showing where the time actually goes in an object-centric process, to an audience that will not read a table of edge durations.",
+        "notFor": "Precise conformance or replay — this is a schematic, and its depth is a longest path over mean waits, not a distribution.",
+        "examples": [
+          "maxActivities 10 and edgeCoverage 80 for a diagram that fits on a slide"
+        ]
+      },
+      "runtime": "wasm",
+      "entry": "promenade_metro_station.js",
+      "wasm": "promenade_metro_station_bg.wasm",
+      "scans": "OCDFG",
+      "scanAction": "core.discover.ocdfg",
+      "kernel": {
+        "class": "StationMapConvert",
+        "abi": "value-finalize/1"
+      },
+      "memory": "low",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "stationMap",
+          "type": "OCStationMap"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "maxActivities": {
+            "type": "integer",
+            "title": "Platforms",
+            "description": "The most frequent activities, at most this many. The metaphor only survives at station-atlas scale: past roughly a dozen platforms the depth axis stops being readable and an ordinary metro map is the better drawing.",
+            "default": 10,
+            "minimum": 4,
+            "maximum": 24,
+            "primary": true
+          },
+          "edgeCoverage": {
+            "type": "integer",
+            "title": "Route coverage",
+            "description": "Keeps the strongest hand-offs until they account for this share of everything that actually happened, rather than cutting at an arbitrary count. Whatever the cut, every platform keeps its strongest arriving and departing route, so no platform is left unreachable.",
+            "default": 88,
+            "minimum": 40,
+            "maximum": 100
+          },
+          "showRework": {
+            "type": "boolean",
+            "title": "Draw rework",
+            "description": "Hand-offs that run back against process order. They rise rather than descend — a case going back to an earlier step is going back up the building — and they are drawn on the same track system as everything else rather than in a channel of their own.",
+            "default": true
+          },
+          "objectTypes": {
+            "type": "array",
+            "title": "Object types",
+            "description": "Empty means every object type the OC-DFG has. Each one is a route, so this is also how a four-color diagram becomes a two-color one.",
+            "default": [],
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC, object_type",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "maxObjectTypes": {
+            "type": "integer",
+            "title": "Object type limit",
+            "description": "Forwarded to core.discover.ocdfg, which runs internally: how many of the most frequent object types the underlying graph is mined for at all. Five is already a five-color diagram; the metaphor does not survive many more. Narrowing the drawing afterwards is what the picker above is for.",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "maxActivities",
+          "edgeCoverage"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.metro-station.view",
+      "label": "Metro Station",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "OCStationMap"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "timeScale": {
+            "type": "string",
+            "title": "Depth axis",
+            "description": "`logarithmic` is the readable default on a real process, where one two-day wait would otherwise press every minute-scale step into a single floor. `linear` reads literally: twice the wait, twice the drop. The order of the platforms is identical either way, and the axis is graduated through whichever curve is in force, so its numbers stay correct — only their spacing changes.",
+            "enum": [
+              "logarithmic",
+              "linear"
+            ],
+            "default": "logarithmic",
+            "primary": true,
+            "cheap": true
+          },
+          "depthScale": {
+            "type": "number",
+            "title": "Depth",
+            "description": "Vertical exaggeration, the same knob a relief map has. Also on the panel's own toolbar, next to the building it stretches.",
+            "default": 1,
+            "minimum": 0.25,
+            "maximum": 2.5,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "viewMode": {
+            "type": "string",
+            "title": "Mode",
+            "description": "`flat` collapses the depth axis and looks straight down, which is an ordinary 2D metro map of the same routes — the honest answer to \"I cannot trace that connection in 3D\". `time-depth` is the whole point of the plugin, but it is a mode, not the only way to read the diagram.",
+            "enum": [
+              "time-depth",
+              "flat"
+            ],
+            "default": "time-depth",
+            "cheap": true
+          },
+          "lineWidth": {
+            "type": "string",
+            "title": "Route width",
+            "description": "`frequency` thickens a route in proportion to how many objects travel it, which is the transit-map convention. `uniform` keeps every route the same width, for a diagram meant to be read for structure rather than volume.",
+            "enum": [
+              "frequency",
+              "uniform"
+            ],
+            "default": "frequency",
+            "cheap": true
+          },
+          "shafts": {
+            "type": "string",
+            "title": "Waiting",
+            "description": "How a descent is drawn. `elevators` gives a long wait a translucent shaft and a short one a staircase, which is what makes a bottleneck visible from across the room. `ramps` draws every descent as a slope instead, for a diagram that has to print in one ink.",
+            "enum": [
+              "elevators",
+              "ramps"
+            ],
+            "default": "elevators",
+            "cheap": true
+          },
+          "palette": {
+            "type": "string",
+            "title": "Palette",
+            "description": "`daylight` is the light, printable scheme of a published station atlas. `night` is the dark one, for a dashboard.",
+            "enum": [
+              "daylight",
+              "night"
+            ],
+            "default": "daylight",
+            "cheap": true
+          },
+          "showGrid": {
+            "type": "boolean",
+            "title": "Depth guides",
+            "description": "The dashed floor and the graduated bands behind the diagram, which are what let a platform's depth be read as a duration rather than merely compared with its neighbors.",
+            "default": true,
+            "cheap": true
+          },
+          "showLabels": {
+            "type": "boolean",
+            "title": "Platform names",
+            "default": true,
+            "cheap": true
+          },
+          "animateFlow": {
+            "type": "boolean",
+            "title": "Traffic",
+            "description": "Marks traveling along each route, paced by the hand-off's own measured wait, and a lift car running in each shaft. A car only ever descends and then beams back to the top with a flash, because a car climbing the shaft would be a case traveling backwards through the process — the one thing this drawing must never appear to say.",
+            "default": true,
+            "cheap": true
+          },
+          "renderer": {
+            "type": "string",
+            "title": "Graphics backend",
+            "description": "`auto` lets three.js target WebGPU where the browser offers it and fall back to WebGL 2 where it does not. `webgl2` pins the fallback, for a machine whose driver claims WebGPU support and then renders incorrectly.",
+            "enum": [
+              "auto",
+              "webgl2"
+            ],
+            "default": "auto"
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog",
+    "OCStationMap"
+  ],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "object-centric",
+    "metro-map",
+    "schematic",
+    "waiting-time",
+    "bottleneck",
+    "3d",
+    "webgpu",
+    "rust",
+    "visual-analytics",
+    "view"
+  ],
+  "homepage": "https://github.com/promenade-lab/metro-station",
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/reading-the-station.md",
+      "title": "Reading the station"
+    },
+    {
+      "path": "docs/how-the-plan-is-built.md",
+      "title": "How the plan is built"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

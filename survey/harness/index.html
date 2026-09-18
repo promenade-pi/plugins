@@ -1,0 +1,207 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Survey view harness</title>
+    <style>
+      /* The closed token list the host injects into the real frame. */
+      :root {
+        --bg: #ffffff; --bg-soft: #f7f8fa; --bg-sunken: #eef0f4;
+        --border: #d9dce3; --text: #1c2027; --text-dim: #767d8a;
+        --accent: #3b6fe0; --accent-soft: #e7eefc;
+        --danger: #d64550; --warn: #d98b17; --ok: #2f9e5f;
+      }
+      html, body { margin: 0; height: 100%; overflow: hidden; }
+      body { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      #root { position: absolute; inset: 0 0 22px 0; }
+      #probe {
+        position: fixed; left: 0; right: 0; bottom: 0; height: 22px; z-index: 99;
+        background: #111; color: #6f6; font: 11px ui-monospace, monospace;
+        padding: 3px 8px; white-space: pre; overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="probe">booting…</div>
+    <script>
+      /**
+       * A dev harness for the Survey views.
+       *
+       * `promenade` here is scripted rather than wired to a real host, and for
+       * this plugin that is the *point*: what needs exercising is the
+       * questionnaire against a workspace whose panels and parameters the test
+       * can change on command — a participant filtering a metro map, in one
+       * line — which no fixed fixture and no screenshot can do.
+       *
+       * The stub answers exactly the contract in `plugin-frame.html`, so a
+       * behaviour that works here is a behaviour the real frame will get.
+       */
+      (function () {
+        var handlers = {};
+        var panels = [];
+        var params = {};
+
+        // Everything the driver reads back or pokes at.
+        var log = { openView: [], published: [], setParams: [] };
+        window.__log = log;
+        window.__panels = function () { return panels; };
+
+        function emitWorkspace() {
+          try { handlers.workspace && handlers.workspace({ panels: panels }); } catch (e) { console.error(e); }
+        }
+
+        /** Simulates the participant changing something in the panel next door. */
+        window.__setPanelParams = function (viewId, next) {
+          panels = panels.map(function (p) {
+            return p.viewId === viewId ? Object.assign({}, p, { params: Object.assign({}, p.params, next) }) : p;
+          });
+          emitWorkspace();
+        };
+        /** Simulates the participant closing the stimulus panel. */
+        window.__closePanel = function (viewId) {
+          panels = panels.filter(function (p) { return p.viewId !== viewId; });
+          emitWorkspace();
+        };
+        /** Simulates a selection made in another panel and forwarded by the bus. */
+        window.__select = function (items) {
+          try { handlers.selection && handlers.selection({ items: items }); } catch (e) { console.error(e); }
+        };
+        /** Simulates the host's injected resize (an iframe gets no useful one). */
+        window.__resize = function (w, h) {
+          try { handlers.resize && handlers.resize({ w: w, h: h || 800 }); } catch (e) { console.error(e); }
+        };
+        /** Simulates the host echoing persisted params back (a reload). */
+        window.__pushParams = function (next) {
+          params = next;
+          try { handlers.params && handlers.params(next); } catch (e) { console.error(e); }
+        };
+
+        var query = new URLSearchParams(location.search);
+        var viewId = query.get('view') || 'run.promenade.survey.run';
+        var artifact = JSON.parse(sessionStorage.getItem('sv-artifact') || 'null') || {
+          id: 'a_survey', name: 'Survey', type: 'Survey', tables: {}, value: null,
+        };
+        window.__setArtifact = function (a) {
+          sessionStorage.setItem('sv-artifact', JSON.stringify(a));
+        };
+
+        window.promenade = {
+          sql: function () { return Promise.resolve({ numRows: 0, columns: {} }); },
+          workspace: function () { return Promise.resolve({ panels: panels }); },
+          openView: function (artifactId, view, p, opts) {
+            log.openView.push({ artifactId: artifactId, viewId: view, params: p, opts: opts });
+            // The real host opens a panel, or redirects an open one to the new
+            // parameters. Both paths end with the panel showing `p`, which is
+            // what the survey then reads back.
+            var found = false;
+            panels = panels.map(function (panel) {
+              if (panel.artifactId !== artifactId || panel.viewId !== view) return panel;
+              found = true;
+              return Object.assign({}, panel, { params: Object.assign({}, p) });
+            });
+            if (!found) {
+              panels = panels.concat([{
+                panelId: 'p' + panels.length, artifactId: artifactId,
+                artifactName: artifactId === 'a_log' ? 'Logistics' : artifactId,
+                artifactType: 'ObjectCentricEventLog',
+                viewId: view, viewLabel: view.split('.').pop(),
+                params: Object.assign({}, p), active: false,
+              }]);
+            }
+            emitWorkspace();
+            return Promise.resolve(null);
+          },
+          publishArtifact: function (request) {
+            log.published.push(request);
+            return Promise.resolve({ id: 'a_new', name: request.name, type: request.type });
+          },
+          artifact: function () { return artifact; },
+          view: function () { return { id: viewId, label: viewId }; },
+          theme: function () { return {}; },
+          color: function () { return '#888'; },
+          select: function () {},
+          setParams: function (patch) {
+            log.setParams.push(patch);
+            params = Object.assign({}, params, patch);
+          },
+          cachedState: function () { return Promise.resolve(null); },
+          setCachedState: function () {},
+          on: function (event, fn) { handlers[event] = fn; },
+          ready: function () {
+            document.getElementById('probe').textContent = 'ready · ' + viewId;
+          },
+        };
+
+        /** What a driver asserts on: the numbers and text now on screen. */
+        window.__probe = function () {
+          var text = function (sel) {
+            return [].map.call(document.querySelectorAll(sel), function (e) { return e.textContent.trim(); });
+          };
+          var one = function (sel) {
+            var e = document.querySelector(sel);
+            return e ? e.textContent.trim() : null;
+          };
+          return {
+            title: one('.sv-title'),
+            step: one('.sv-head-count'),
+            prompt: one('.sv-prompt'),
+            help: one('.sv-help'),
+            options: text('.sv-option'),
+            chosen: text('.sv-option.on'),
+            points: text('.sv-point'),
+            chosenPoint: one('.sv-point.on'),
+            readout: one('.sv-readout'),
+            chips: text('.sv-chip'),
+            diff: text('.sv-diff tr'),
+            stimulus: one('.sv-stimulus-what'),
+            required: one('.sv-required'),
+            nextDisabled: !!(document.querySelector('.sv-foot .sv-btn.primary') || {}).disabled,
+            nextLabel: one('.sv-foot .sv-btn.primary'),
+            error: one('.sv-error'),
+            ok: one('.sv-ok'),
+            hint: one('.sv-hint'),
+            steps: text('.sv-step'),
+            problems: text('.sv-problems li'),
+            captureList: text('.sv-capture-list button'),
+            bars: text('.sv-bar-row'),
+            tableRows: document.querySelectorAll('.sv-table tbody tr').length,
+          };
+        };
+
+        /** Clicks the first element matching, and reports what it hit. */
+        window.__click = function (selector, match) {
+          var el = [].filter.call(document.querySelectorAll(selector), function (e) {
+            return match == null || new RegExp(match).test(e.textContent);
+          })[0];
+          if (!el) return 'no match: ' + selector + ' ~ ' + match;
+          el.click();
+          return (el.textContent || el.value || '').trim().slice(0, 60);
+        };
+
+        /** Types into a controlled input the way React will notice. */
+        window.__type = function (selector, value) {
+          var el = document.querySelector(selector);
+          if (!el) return 'no match: ' + selector;
+          var proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+          Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, value);
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          return 'typed';
+        };
+
+        /** Picks an option in a controlled <select>. */
+        window.__pick = function (selector, value) {
+          var el = document.querySelector(selector);
+          if (!el) return 'no match: ' + selector;
+          Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(el, value);
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          return 'picked ' + value;
+        };
+
+        var s = document.createElement('script');
+        s.src = './plugin.js';
+        document.body.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>

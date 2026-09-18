@@ -1,0 +1,231 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocim",
+  "name": "Object-Centric Inductive Miner",
+  "version": "0.1.10",
+  "license": "MIT",
+  "description": "Niklas van Detten's Object-Centric Inductive Miner in Rust. Discovers a typed, block-structured object-centric process tree directly from an OCEL, then converts that tree to an object-centric Petri net.",
+  "apiVersion": "1",
+  "artifactTypes": [
+    {
+      "id": "ObjectCentricProcessTree",
+      "label": "Object-Centric Process Tree",
+      "shortLabel": "OCPT",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.ocim.project",
+      "label": "Project for Object-Centric Inductive Miner",
+      "internal": true,
+      "runtime": "relational",
+      "queryFile": "project.sql",
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "projected",
+          "type": "TraditionalEventLog"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectTypes": {
+            "type": "array",
+            "title": "Object types",
+            "description": "Which object types participate. An empty selection uses every type in the log.",
+            "default": [],
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "id": "run.promenade.ocim.discover",
+      "label": "Discover Object-Centric Process Tree",
+      "runtime": "wasm",
+      "entry": "promenade_ocim.js",
+      "wasm": "promenade_ocim_bg.wasm",
+      "scans": "TraditionalEventLog",
+      "scanAction": "run.promenade.ocim.project",
+      "memory": "high",
+      "kernel": {
+        "class": "OcimScan",
+        "abi": "scan-finalize/1",
+        "scan": {
+          "order": "timestampNullsLast",
+          "includeEmptyTraces": true,
+          "activityIds": "firstAppearance"
+        }
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tree",
+          "type": "ObjectCentricProcessTree"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectTypes": {
+            "type": "array",
+            "title": "Object types",
+            "default": [],
+            "description": "Which object types participate. An empty selection uses every type in the log.",
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "interactionPatterns": {
+            "type": "array",
+            "title": "Interaction patterns",
+            "default": []
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Distinct activities",
+            "default": 2000,
+            "minimum": 2,
+            "maximum": 10000
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "id": "run.promenade.ocim.to-ocpn",
+      "label": "Object-Centric Process Tree → Object-Centric Petri Net",
+      "runtime": "wasm",
+      "entry": "promenade_ocim.js",
+      "wasm": "promenade_ocim_bg.wasm",
+      "memory": "medium",
+      "kernel": {
+        "class": "OcimConvert",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "tree",
+          "type": "ObjectCentricProcessTree",
+          "required": true,
+          "label": "an Object-Centric Process Tree"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ocpn",
+          "type": "ObjectCentricPetriNet"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.ocim.view",
+      "label": "Object-Centric Process Tree",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "ObjectCentricProcessTree"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "orientation": {
+            "type": "string",
+            "title": "Orientation",
+            "enum": [
+              "vertical",
+              "horizontal"
+            ],
+            "default": "vertical",
+            "primary": true,
+            "cheap": true
+          },
+          "showInteractionTable": {
+            "type": "boolean",
+            "title": "Show interaction tables",
+            "description": "Per-leaf table of related object types with X marks for divergence, convergence, and deficiency.",
+            "default": true,
+            "cheap": true
+          },
+          "compactSilent": {
+            "type": "boolean",
+            "title": "Compact silent steps",
+            "description": "Shrinks and mutes τ (silent) leaves instead of hiding them. A τ is what makes an XOR branch optional or a loop 0..* vs 1..* — removing it from the drawing would misrepresent the model, not just declutter it.",
+            "default": false,
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricProcessTree"
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "van Detten, N. Object-Centric Inductive Miner.",
+    "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5668513"
+  },
+  "repository": "https://github.com/Nik314/OCIM",
+  "keywords": [
+    "discovery",
+    "object-centric",
+    "ocel",
+    "process-tree",
+    "petri-net",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "author": "Promenade Team"
+}

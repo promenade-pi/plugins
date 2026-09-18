@@ -1,0 +1,128 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocpn-replay",
+  "name": "OCEL/OCPN Replay",
+  "version": "0.2.0",
+  "license": "MIT",
+  "description": "Replays every timestamped OCEL event against a selected Object-Centric Petri Net using a deterministic object-bound token game. Produces source-bound event support, log/model moves, and replayed-event interaction fields for Interaction Atlas.",
+  "runtime": "pyodide",
+  "entry": "plugin.py",
+  "pythonDeps": [],
+  "actions": [
+    {
+      "id": "run.promenade.ocpn-replay.replay",
+      "label": "Replay OCEL on OCPN",
+      "memory": "high",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        },
+        {
+          "name": "model",
+          "type": "ObjectCentricPetriNet",
+          "required": true,
+          "label": "an Object-Centric Petri Net"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "evidence",
+          "type": "ObjectCentricReplayEvidence"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "maxEvents": {
+            "type": "integer",
+            "title": "Maximum events",
+            "description": "Safety ceiling for a complete replay. The action stops rather than producing evidence for only a prefix; raise it above the source event count if necessary.",
+            "default": 500000,
+            "minimum": 1000,
+            "maximum": 5000000,
+            "multipleOf": 1000,
+            "maxFrom": "events"
+          },
+          "maxSilentMoves": {
+            "type": "integer",
+            "title": "Silent-move bound",
+            "description": "Maximum silent transitions explored per object binding while enabling an observed activity. It bounds search without changing event order.",
+            "default": 32,
+            "minimum": 0,
+            "maximum": 128
+          },
+          "binCount": {
+            "type": "integer",
+            "title": "Interaction-field bins",
+            "description": "Resolution of the replayed-event expected interaction fields. Choose the same value in Interaction Atlas to inspect residuals.",
+            "default": 24,
+            "minimum": 8,
+            "maximum": 80
+          },
+          "traceLimit": {
+            "type": "integer",
+            "title": "Animation frames",
+            "description": "Events kept as a step-by-step firing trace for the Replay animation view. The token game replays these deterministically, so no marking snapshots are stored. 0 disables the trace; large values inflate the artifact, which is kept in memory only below 2 MB.",
+            "default": 3000,
+            "minimum": 0,
+            "maximum": 50000,
+            "multipleOf": 500
+          }
+        },
+        "required": [
+          "maxEvents",
+          "maxSilentMoves",
+          "binCount"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.ocpn-replay.replay-view",
+      "label": "Replay animation",
+      "kind": "sandboxed",
+      "entry": "view.js",
+      "appliesTo": [
+        "ObjectCentricReplayEvidence"
+      ],
+      "primary": true,
+      "livePreview": true
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog",
+    "ObjectCentricPetriNet",
+    "ObjectCentricReplayEvidence"
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "keywords": [
+    "conformance",
+    "replay",
+    "ocel",
+    "ocpn",
+    "interaction-atlas"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/semantics.md",
+      "title": "Replay semantics"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "author": "Promenade Team"
+}

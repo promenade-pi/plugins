@@ -1,0 +1,25 @@
+[workspace]
+members = ["crates/ocim-core"]
+resolver = "2"
+
+[package]
+name = "promenade-ocim"
+version = "0.1.3"
+edition = "2021"
+license = "MIT"
+description = "Object-Centric Inductive Miner: OCEL to object-centric process tree and Petri net"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ocim-core = { path = "crates/ocim-core" }
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

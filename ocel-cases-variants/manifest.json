@@ -1,0 +1,118 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocel-cases-variants",
+  "name": "Cases & Variants (OCEL)",
+  "version": "0.7.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "The object-centric analog of the traditional \"Cases & variants\" view. Cases become process executions (Adams, Schuster, Schmitz, Schuh & van der Aalst, \"Defining Cases and Variants for Object-Centric Event Data\", arXiv:2208.03235): connected subgraphs of the object co-occurrence graph, extracted either by connected components or by a chosen leading object type. Variants become equivalence classes of process executions under activity-labeled graph isomorphism (Weisfeiler-Lehman canonical hashing, then exact verification within each hash bucket). Create execution partition publishes the typed, source-bound memberships for downstream views without duplicating OCEL records.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.ocel-cases-variants.view",
+      "label": "Cases & variants",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "extraction": {
+            "type": "string",
+            "title": "Extraction method",
+            "description": "Leading type: each object of the chosen type roots its own process execution (closest related objects are pulled in). Connected components: every transitively co-occurring object is grouped into one execution — parameter-free, but can produce a few very large executions on a highly entangled log.",
+            "enum": [
+              "leadingType",
+              "connectedComponents"
+            ],
+            "default": "leadingType",
+            "primary": true
+          },
+          "leadingType": {
+            "type": "string",
+            "title": "Leading object type",
+            "description": "Only used when extraction is Leading type. The most frequent object type is selected automatically for a new view.",
+            "default": "",
+            "cheap": true,
+            "defaultFromOptions": "first",
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "coverage": {
+            "type": "integer",
+            "title": "Coverage",
+            "description": "Trims the variant list to the top variants whose cumulative share of process executions reaches this percentage.",
+            "default": 95,
+            "minimum": 1,
+            "maximum": 100,
+            "cheap": true
+          },
+          "maxEvents": {
+            "type": "integer",
+            "title": "Max events per execution",
+            "description": "On a densely entangled object graph (a shared hub object — an employee, a truck, a busy customer — links a large part of the log together), a single execution's true event set can approach the whole log. Executions are truncated to their chronologically-first N events past this limit — still a real, comparable graph, just a partial one — to keep extraction from taking minutes. Raise it to see more of each large execution, at the cost of a slower extraction.",
+            "default": 300,
+            "minimum": 50,
+            "maximum": 1000,
+            "multipleOf": 50,
+            "cheap": true
+          },
+          "scopeSharedObjects": {
+            "type": "boolean",
+            "title": "Scope shared objects to their closest case",
+            "description": "Only used when extraction is Leading type. A resource reused across many cases (a runway, a fuel truck) is still included in every case it touches, but only its events closest to that specific case are counted — its other, unrelated appearances elsewhere in the log are not. This is a deliberate deviation from the paper's Definition 4 (which includes an object's entire event history wherever the object appears); turn it off to see the paper's strict reading instead.",
+            "default": true,
+            "cheap": true
+          },
+          "chevronColor": {
+            "type": "string",
+            "title": "Color chevrons...",
+            "description": "By involved object types (default): each chevron is split into diagonal bands, one per distinct object type touching that event — Table I's own convention for a shared event ('colored with the corresponding colors'), and ocpa's rendering — with each lane also getting a pale wash of its own type behind the whole row, same as 'by swimlane', so a lane's own type still reads at a glance. By activity: every chevron is a single solid color from its activity, like the Variants/Cases path chips and the rest of the view — the same activity reads as the same color in every lane, at the cost of not showing which object types share the event (no lane wash either, since a lane's type plays no part in this mode). By swimlane: every chevron in a lane takes that lane's own object-type color (plus the pale row wash) — good for visually tracking which single object type dominates an execution, but blind to any other type sharing the event.",
+            "enum": [
+              "by involved object types",
+              "by activity",
+              "by swimlane"
+            ],
+            "default": "by involved object types",
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog"
+  ],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "J. N. Adams, D. Schuster, S. Schmitz, G. Schuh, W. M. P. van der Aalst, \"Defining Cases and Variants for Object-Centric Event Data,\" arXiv:2208.03235, 2022.",
+    "url": "https://arxiv.org/abs/2208.03235"
+  },
+  "keywords": [
+    "object-centric",
+    "ocel",
+    "cases",
+    "variants",
+    "process-executions",
+    "graph-isomorphism",
+    "view"
+  ],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

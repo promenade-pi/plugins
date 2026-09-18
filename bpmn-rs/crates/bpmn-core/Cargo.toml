@@ -1,0 +1,17 @@
+[package]
+name = "bpmn-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Pure Rust BPMN 2.0 model, plus conversions to/from Petri nets and process trees"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+roxmltree = "0.20"
+
+[dev-dependencies]
+serde_json = "1"
+# The invariants close the loop the two new pieces exist for: replace the
+# OR-joins, convert without needing block structure, and have an implementation
+# that knows nothing about BPMN say whether the result is sound.
+soundness-core = { path = "../../../soundness-rs/crates/soundness-core" }

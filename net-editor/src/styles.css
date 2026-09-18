@@ -1,0 +1,132 @@
+/* Host theme tokens arrive as `--bg`, `--text`, … on the frame's root. */
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg, #fff); color: var(--text, #1c2027);
+}
+
+.ne { display: flex; flex-direction: column; height: 100%; }
+
+.ne-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 10px; border-bottom: 1px solid var(--border, #dfe3ea); background: var(--bg-soft, #f7f8fa);
+}
+.ne-name {
+  font: inherit; font-size: 13px; font-weight: 600; padding: 5px 9px; min-width: 190px;
+  border: 1px solid var(--border, #dfe3ea); border-radius: 6px; background: var(--bg, #fff); color: var(--text, #1c2027);
+}
+.ne-bar-spacer { flex: 1; }
+.ne button {
+  font: inherit; font-size: 12.5px; padding: 5px 11px; border-radius: 6px;
+  border: 1px solid var(--border, #dfe3ea); background: var(--bg, #fff); color: var(--text, #1c2027); cursor: pointer;
+}
+.ne button:hover:not(:disabled) { background: var(--bg-sunken, #eef0f4); }
+.ne button:disabled { opacity: .5; cursor: default; }
+.ne button.primary { background: var(--accent, #2563eb); border-color: var(--accent, #2563eb); color: #fff; }
+/* The background is restated, not just brightened: the generic
+   `.ne button:hover` above is one specificity point *higher* than
+   `.ne button.primary`, so on hover it repainted the primary button with the
+   neutral surface while its text stayed white — an invisible label. */
+.ne button.primary:hover:not(:disabled) {
+  background: var(--accent, #2563eb); filter: brightness(1.07);
+}
+
+.ne-body { flex: 1; display: flex; min-height: 0; }
+.ne-side {
+  width: 236px; flex: none; overflow: auto; padding: 12px;
+  border-right: 1px solid var(--border, #dfe3ea); background: var(--bg-soft, #f7f8fa);
+  display: flex; flex-direction: column; gap: 18px;
+}
+.ne-side h4 {
+  margin: 0 0 7px; font-size: 10px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--text-dim, #6b7280);
+}
+.ne-add { display: flex; gap: 6px; }
+.ne-add button { flex: 1; }
+
+.ne-types { display: flex; flex-direction: column; gap: 5px; }
+.ne-type { display: flex; align-items: center; gap: 6px; }
+.ne-type input[type="text"] {
+  flex: 1; min-width: 0; font: inherit; font-size: 12px; padding: 4px 7px;
+  border: 1px solid var(--border, #dfe3ea); border-radius: 5px; background: var(--bg, #fff); color: var(--text, #1c2027);
+}
+.ne-swatch { width: 15px; height: 15px; border-radius: 4px; border: 0; padding: 0; cursor: pointer; flex: none; }
+.ne-type button.x { border: 0; background: transparent; color: var(--text-dim, #6b7280); padding: 0 3px; }
+.ne-hint { font-size: 11px; color: var(--text-dim, #6b7280); line-height: 1.45; }
+
+.ne-canvas { flex: 1; min-width: 0; position: relative; }
+
+.ne-inspector {
+  width: 250px; flex: none; overflow: auto; padding: 12px;
+  border-left: 1px solid var(--border, #dfe3ea); background: var(--bg-soft, #f7f8fa);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.ne-field { display: flex; flex-direction: column; gap: 4px; }
+.ne-field > span { font-size: 11px; color: var(--text-dim, #6b7280); }
+.ne-field input[type="text"], .ne-field select {
+  font: inherit; font-size: 12.5px; padding: 5px 8px;
+  border: 1px solid var(--border, #dfe3ea); border-radius: 5px; background: var(--bg, #fff); color: var(--text, #1c2027);
+}
+.ne-check { display: flex; align-items: center; gap: 7px; font-size: 12.5px; }
+
+.ne-problems {
+  border-top: 1px solid var(--border, #dfe3ea); background: var(--bg-soft, #f7f8fa);
+  padding: 8px 12px; max-height: 132px; overflow: auto;
+}
+
+/* A panel docked beside others can be narrower than the two side columns put
+ * together, which leaves the canvas a few pixels wide — the one part of an
+ * editor that cannot be squeezed. Below that width the inspector moves under
+ * the canvas and the sidebar gives up what it can, so the drawing surface
+ * stays the largest thing on screen. The query is on the frame's own
+ * viewport, which is the panel. */
+@media (max-width: 720px) {
+  .ne-body { flex-wrap: wrap; }
+  .ne-side { width: 176px; padding: 10px; gap: 14px; }
+  .ne-canvas { min-width: 200px; min-height: 240px; }
+  .ne-inspector {
+    width: 100%; flex: none; max-height: 190px;
+    border-left: 0; border-top: 1px solid var(--border, #dfe3ea);
+  }
+}
+.ne-problem { font-size: 11.5px; color: var(--warn, #b7791f); line-height: 1.5; }
+.ne-ok { font-size: 11.5px; color: var(--ok, #15803d); }
+.ne-error { font-size: 11.5px; color: var(--danger, #d64550); line-height: 1.5; }
+
+/* Nodes ------------------------------------------------------------------- */
+.ne-place, .ne-transition { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ne-place-circle {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 2px solid var(--text-dim, #6b7280); background: var(--bg, #fff);
+  display: grid; place-items: center; position: relative;
+}
+.ne-token { width: 13px; height: 13px; border-radius: 50%; background: var(--text, #1c2027); }
+.ne-final-ring {
+  position: absolute; inset: 4px; border-radius: 50%; border: 2px solid var(--text-dim, #6b7280);
+}
+.ne-transition-bar {
+  width: 22px; height: 44px; border: 2px solid var(--text-dim, #6b7280);
+  background: var(--bg, #fff); border-radius: 3px; overflow: hidden; display: flex;
+}
+.ne-transition-bar.silent { background: var(--text-dim, #6b7280); }
+.ne-stripes { display: flex; flex-direction: column; width: 100%; }
+.ne-stripes span { flex: 1; }
+.ne-node-label {
+  font-size: 11px; text-align: center; max-width: 124px; line-height: 1.3;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.ne-node-label em { color: var(--text-dim, #6b7280); font-style: italic; }
+.ne-type-chip {
+  font-size: 9px; font-weight: 700; letter-spacing: .03em; color: #fff;
+  padding: 0 5px; border-radius: 20px; text-transform: uppercase;
+}
+.ne-place.sel .ne-place-circle, .ne-transition.sel .ne-transition-bar { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }
+.ne-place.faulty .ne-place-circle, .ne-transition.faulty .ne-transition-bar { border-color: var(--danger, #d64550); }
+.ne-handle { width: 7px; height: 7px; background: var(--text-dim, #6b7280); border: 0; }
+
+.ne-drop {
+  position: absolute; inset: 0; z-index: 5; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--accent, #2563eb) 12%, transparent);
+  border: 2px dashed var(--accent, #2563eb); font-weight: 600; color: var(--accent, #2563eb);
+}

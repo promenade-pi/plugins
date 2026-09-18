@@ -1,0 +1,151 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.inductive-py",
+  "name": "Inductive Miner (pm4py)",
+  "version": "0.2.3",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Discovers a process tree with pm4py's inductive miner, and converts it to an accepting Petri net. Runs in Pyodide.",
+  "runtime": "pyodide",
+  "entry": "plugin.py",
+  "pythonDeps": [
+    "numpy",
+    "pandas",
+    "scipy",
+    "networkx",
+    "lxml",
+    "matplotlib",
+    "pytz",
+    "tqdm",
+    "pyarrow",
+    "graphviz",
+    "deprecation",
+    "intervaltree",
+    "sortedcontainers",
+    "pm4py"
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.inductive-py.discover",
+      "label": "Inductive Miner (pm4py)",
+      "description": "Discovers a process tree from a traditional event log with pm4py's IMf variant. The tree is sound and block-structured by construction, so it always replays; the noise threshold trades fitness for simplicity.",
+      "agent": {
+        "whenToUse": "The default choice for discovering a model from a case-centric log — unlike the Alpha Miner it tolerates noise and always yields a sound model.",
+        "notFor": "Object-centric logs (flatten first, or use an object-centric miner), and not a way to see infrequent behavior: raising noiseThreshold removes it.",
+        "examples": [
+          "noiseThreshold 0.0 for the full behavior of a clean log",
+          "noiseThreshold 0.2 as a first readable model of a noisy real-world log",
+          "maxEvents to cap a large log while exploring"
+        ]
+      },
+      "entryPoint": "discover",
+      "memory": "high",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tree",
+          "type": "ProcessTree"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "noiseThreshold": {
+            "type": "number",
+            "title": "Noise threshold",
+            "description": "Higher values simplify the model. Re-runs discovery; on a large log this is seconds, not milliseconds.",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 0.9,
+            "multipleOf": 0.05,
+            "primary": true
+          },
+          "maxEvents": {
+            "type": "integer",
+            "title": "Event limit",
+            "description": "A safety ceiling, not a normal control: the default covers any log this algorithm can comfortably mine in a browser tab, so almost no run should ever hit it. When one does, the result is flagged as truncated — lower this only to iterate faster on a huge log before committing to a full run. Changing it re-runs the expensive stage.",
+            "default": 2000000,
+            "minimum": 1000,
+            "maximum": 5000000,
+            "multipleOf": 1000,
+            "maxFrom": "events"
+          }
+        },
+        "required": [
+          "noiseThreshold",
+          "maxEvents"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.inductive-py.toPetriNet",
+      "label": "Process tree → Petri net",
+      "description": "Converts a process tree into a behaviorally equivalent accepting Petri net, with an initial and a final marking.",
+      "agent": {
+        "whenToUse": "When a downstream action needs a Petri net — conformance checking and alignments take one, not a tree.",
+        "notFor": "Discovery. It adds no information; it only changes the representation."
+      },
+      "entryPoint": "to_petri_net",
+      "memory": "normal",
+      "inputs": [
+        {
+          "name": "tree",
+          "type": "ProcessTree",
+          "required": true,
+          "label": "a Process Tree"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "net",
+          "type": "AcceptingPetriNet"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.inductive-py.netView",
+      "label": "Petri net",
+      "kind": "native",
+      "native": "core.petriNetView",
+      "appliesTo": [
+        "AcceptingPetriNet"
+      ]
+    }
+  ],
+  "recommends": [
+    {
+      "id": "run.promenade.process-tree-view",
+      "reason": "draws the process trees this plugin produces"
+    }
+  ],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "keywords": [
+    "discovery",
+    "pm4py",
+    "python",
+    "process-tree"
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ]
+}

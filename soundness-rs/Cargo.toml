@@ -1,0 +1,25 @@
+[workspace]
+members = ["crates/soundness-core"]
+resolver = "2"
+
+[package]
+name = "promenade-soundness"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Soundness and workflow-net diagnosis for accepting Petri nets"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+soundness-core = { path = "crates/soundness-core" }
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

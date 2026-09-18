@@ -1,0 +1,25 @@
+# Standalone workspace: nothing above this directory owns this package.
+[workspace]
+
+[package]
+name = "promenade-relation-gap"
+version = "0.2.0"
+edition = "2021"
+license = "MIT"
+description = "Heterogeneous GraphSAGE link reconstruction for object-centric event logs"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde-wasm-bindgen = "0.6"
+js-sys = "0.3"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

@@ -1,0 +1,8 @@
+[package]
+name = "inductive-miner-core"
+version = "0.1.0"
+edition = "2021"
+description = "Inductive Miner (IM / IMf) over trace variants — pure Rust, no host, no browser"
+license = "MIT"
+
+[dependencies]

@@ -1,0 +1,332 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Friction Topography view harness</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #05080d; }
+      body { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      #root { position: absolute; inset: 0; }
+      #probe {
+        position: fixed; bottom: 0; left: 0; z-index: 99;
+        background: #111; color: #0f0; font: 10px ui-monospace, monospace;
+        padding: 3px 7px; white-space: pre; max-width: 60vw;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="probe">booting…</div>
+    <script type="module">
+      /**
+       * A throwaway harness for the sandboxed view.
+       *
+       * The shipped view runs in an opaque-origin iframe under
+       * `sandbox="allow-scripts"`, where a test driver's synthetic pointer
+       * events never arrive and `read_page` sees nothing at all. This page
+       * loads the *same* bundle in an ordinary same-origin document, and backs
+       * `promenade.sql()` with a *real* DuckDB-Wasm holding a synthetic log in
+       * the host's own physical layout - so every statement in `query.ts` is
+       * genuinely executed and genuinely parsed, rather than trusted.
+       *
+       * Staged into `app/__ft-harness/` by `npm run harness`, removed by
+       * `npm run harness:rm`. Dev-only; never leave it staged in a build.
+       */
+      import * as duckdb from '@duckdb/duckdb-wasm';
+      import wasm_eh from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
+      import worker_eh from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
+
+      // The view is loaded as a classic script, so anything it throws lands
+      // here rather than in a module's own rejection handler.
+      window.__thrown = [];
+      window.addEventListener('error', (e) => {
+        window.__thrown.push(String(e.error?.stack ?? e.message));
+      });
+      window.addEventListener('unhandledrejection', (e) => {
+        window.__thrown.push(String(e.reason?.stack ?? e.reason));
+      });
+
+      const probe = document.getElementById('probe');
+      const say = (text) => { probe.textContent = text; };
+
+      /**
+       * A synthetic order-to-delivery log with the shape the view is meant to
+       * expose: one severe queue at "Pick items", a rework loop back from
+       * "Quality check", batched dispatch (two runs a day), and a resource
+       * split where one picker is much slower than the others.
+       */
+      function makeLog() {
+        let s = 987654321;
+        const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 1e6) / 1e6; };
+        const pickers = ['Ada', 'Ben', 'Cleo', 'Dan', 'Ezra'];
+        const events = [];
+        const traces = [];
+        const traceAttrs = [];
+        const H = 3_600_000;
+        let t = Date.UTC(2026, 2, 2, 8, 0, 0);
+
+        for (let c = 0; c < 700; c++) {
+          const priority = rnd() < 0.22 ? 'express' : 'standard';
+          const region = ['North', 'South', 'East', 'West'][Math.floor(rnd() * 4)];
+          traces.push({ trace_idx: c, case_id: `ORD-${10000 + c}` });
+          traceAttrs.push({ trace_idx: c, key: 'priority', type: 'string', value: priority });
+          traceAttrs.push({ trace_idx: c, key: 'region', type: 'string', value: region });
+
+          let now = t + Math.floor(rnd() * 6 * H);
+          const push = (activity, wait, resource) => {
+            now += wait;
+            events.push({ trace_idx: c, activity, ts: now, resource: resource ?? '' });
+          };
+
+          push('Order received', 0, 'portal');
+          push('Validate order', 0.2 * H + rnd() * 0.6 * H, 'portal');
+          if (rnd() < 0.18) push('Check credit', 1.5 * H + rnd() * 4 * H, 'finance');
+
+          // The bottleneck. One picker is far slower, and express orders jump
+          // the queue - both are meant to show up in the Splits tab.
+          const picker = pickers[Math.floor(rnd() * pickers.length)];
+          const slow = picker === 'Cleo' ? 3.4 : 1;
+          const base = priority === 'express' ? 1.5 * H : 11 * H;
+          push('Pick items', (base + rnd() * 9 * H) * slow, picker);
+
+          push('Pack order', 0.4 * H + rnd() * 1.2 * H, picker);
+
+          // Rework: quality check sends some orders back to be re-picked.
+          if (rnd() < 0.21) {
+            push('Quality check', 0.6 * H + rnd() * 2 * H, 'qa');
+            push('Pick items', 6 * H + rnd() * 14 * H, pickers[Math.floor(rnd() * pickers.length)]);
+            push('Pack order', 0.5 * H + rnd() * 1.5 * H, picker);
+          }
+
+          // Batched dispatch: whatever is packed waits for the 11:00 or 17:00
+          // run, so the wait before Ship is bimodal by construction.
+          const packed = now;
+          const day = Math.floor(packed / 86_400_000) * 86_400_000;
+          const runs = [day + 11 * H, day + 17 * H, day + 86_400_000 + 11 * H];
+          const next = runs.find((r) => r > packed) ?? packed + 6 * H;
+          push('Ship', next - packed, 'dispatch');
+
+          push('Delivered', 18 * H + rnd() * 40 * H, 'courier');
+          if (rnd() < 0.07) push('Return requested', 40 * H + rnd() * 120 * H, 'support');
+
+          t += 2.4 * H;
+        }
+
+        events.sort((a, b) => a.ts - b.ts || a.trace_idx - b.trace_idx);
+        events.forEach((e, i) => { e.event_idx = i; });
+        return { events, traces, traceAttrs };
+      }
+
+      say('booting duckdb…');
+      const db = new duckdb.AsyncDuckDB(new duckdb.VoidLogger(), new Worker(worker_eh, { type: 'classic' }));
+      await db.instantiate(wasm_eh);
+      const conn = await db.connect();
+
+      const log = makeLog();
+      const q = (v) => (v == null ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`);
+
+      // The physical layout `tableOf(artifactId, logical)` produces, so the
+      // plugin's own table names are exercised too.
+      await conn.query(
+        'CREATE TABLE harness__event (event_idx BIGINT, trace_idx BIGINT, activity VARCHAR, ' +
+        'ts TIMESTAMP, lifecycle VARCHAR, resource VARCHAR)'
+      );
+      await conn.query('CREATE TABLE harness__trace (trace_idx BIGINT, case_id VARCHAR)');
+      await conn.query('CREATE TABLE harness__trace_attr (trace_idx BIGINT, key VARCHAR, type VARCHAR, value VARCHAR)');
+
+      for (let i = 0; i < log.events.length; i += 800) {
+        const rows = log.events.slice(i, i + 800).map((e) =>
+          `(${e.event_idx}, ${e.trace_idx}, ${q(e.activity)}, ` +
+          `epoch_ms(${e.ts}::BIGINT), 'complete', ${q(e.resource)})`
+        );
+        await conn.query(`INSERT INTO harness__event VALUES ${rows.join(',')}`);
+      }
+      await conn.query(
+        `INSERT INTO harness__trace VALUES ${log.traces.map((t) => `(${t.trace_idx}, ${q(t.case_id)})`).join(',')}`
+      );
+      for (let i = 0; i < log.traceAttrs.length; i += 800) {
+        const rows = log.traceAttrs.slice(i, i + 800).map((a) =>
+          `(${a.trace_idx}, ${q(a.key)}, ${q(a.type)}, ${q(a.value)})`
+        );
+        await conn.query(`INSERT INTO harness__trace_attr VALUES ${rows.join(',')}`);
+      }
+
+      /** Mirrors `toColumns` in `app/src/ui/PluginPanel.tsx` exactly. */
+      function toColumns(table) {
+        const columns = {};
+        for (const field of table.schema.fields) {
+          const vec = table.getChild(field.name);
+          const arr = vec.toArray();
+          if (ArrayBuffer.isView(arr) && !(arr instanceof BigInt64Array) && !(arr instanceof BigUint64Array)) {
+            columns[field.name] = arr.slice();
+          } else if (arr instanceof BigInt64Array || arr instanceof BigUint64Array) {
+            const f = new Float64Array(arr.length);
+            for (let i = 0; i < arr.length; i++) f[i] = Number(arr[i]);
+            columns[field.name] = f;
+          } else {
+            const out = new Array(table.numRows);
+            for (let i = 0; i < table.numRows; i++) {
+              const v = vec.get(i);
+              out[i] = typeof v === 'bigint' ? Number(v) : v == null ? null : String(v);
+            }
+            columns[field.name] = out;
+          }
+        }
+        return { numRows: table.numRows, columns };
+      }
+
+      const theme = {
+        bg: '#14171c', 'bg-soft': '#1c2027', border: '#333a44',
+        text: '#e6e9ee', 'text-dim': '#98a2b3', accent: '#5b8cff',
+      };
+      const handlers = {};
+      window.__sql = [];
+      window.__errors = [];
+      window.__written = [];
+      window.__selected = [];
+      let cached = null;
+
+      window.promenade = {
+        sql: async (text) => {
+          const started = performance.now();
+          try {
+            const table = await conn.query(text);
+            const result = toColumns(table);
+            window.__sql.push({ ms: Math.round(performance.now() - started), rows: result.numRows, text });
+            return result;
+          } catch (err) {
+            window.__errors.push({ message: String(err), text });
+            say(`SQL ERROR (${window.__errors.length}): ${String(err).slice(0, 200)}`);
+            throw err;
+          }
+        },
+        sqlCancelable: (text) => ({ promise: window.promenade.sql(text), cancel: () => {} }),
+        artifact: () => ({
+          id: 'harness', name: 'Retail XES (synthetic)', type: 'TraditionalEventLog',
+          tables: { event: 'harness__event', trace: 'harness__trace', trace_attr: 'harness__trace_attr' },
+          value: null,
+        }),
+        theme: () => theme,
+        color: () => '#888',
+        select: (items) => { window.__selected = items; },
+        setParams: (patch) => { window.__written.push(patch); },
+        cachedState: async () => cached,
+        setCachedState: (value) => { cached = value; },
+        on: (event, fn) => { handlers[event] = fn; },
+        ready: () => { window.__ready = true; },
+      };
+
+      // Drivers for the parts a pointer event cannot reach from outside.
+      window.__setParams = (patch) => handlers.params?.(patch);
+      window.__setSelection = (items) => handlers.selection?.({ items });
+      window.__report = () => ({
+        ready: window.__ready === true,
+        queries: window.__sql.length,
+        slowest: [...window.__sql].sort((a, b) => b.ms - a.ms).slice(0, 5),
+        errors: window.__errors,
+        thrown: window.__thrown,
+        written: window.__written,
+        selected: window.__selected,
+      });
+
+      const counts = await conn.query('SELECT COUNT(*) AS n FROM harness__event');
+      say(`${Number(counts.getChildAt(0).get(0))} events · ${log.traces.length} cases · loading view…`);
+
+      /**
+       * Drive the render loop even while the tab is backgrounded.
+       *
+       * A hidden document gets no `requestAnimationFrame` callbacks at all, and
+       * both R3F's frame loop *and* `react-use-measure` (which R3F gates
+       * renderer creation on) are rAF-driven - so in a headless or hidden pane
+       * the canvas is never even sized, let alone drawn, and the view looks
+       * broken when nothing is wrong with it. A timer-backed shim makes the
+       * same code run at a steady ~30fps regardless of visibility.
+       *
+       * Harness-only. Never do this in the shipped view: throttling an
+       * invisible panel's animation to nothing is correct behaviour.
+       */
+      // Frame counter, independent of the shim below: "did the render loop
+      // actually run" is the first question to ask of a blank canvas, and the
+      // shipped view has no diagnostics of its own to answer it with.
+      window.__frames = 0;
+      const nativeRaf = window.requestAnimationFrame.bind(window);
+      window.requestAnimationFrame = (fn) => nativeRaf((t) => { window.__frames++; fn(t); });
+
+      if (!location.search.includes('norafshim')) {
+        // `ResizeObserver` deliveries are part of "update the rendering", which
+        // a hidden document never performs - and R3F gates renderer creation
+        // on `react-use-measure`, which is ResizeObserver-driven. So without
+        // this the canvas is never sized and the `gl` factory is never even
+        // called. Polling `getBoundingClientRect` gets the same answer;
+        // layout itself is computed in a hidden document.
+        const NativeResizeObserver = window.ResizeObserver;
+        window.ResizeObserver = class PollingResizeObserver {
+          constructor(callback) { this.callback = callback; this.targets = new Set(); this.timer = 0; }
+          observe(target) { this.targets.add(target); this.start(); }
+          unobserve(target) { this.targets.delete(target); }
+          disconnect() { this.targets.clear(); clearInterval(this.timer); this.timer = 0; }
+          start() {
+            if (this.timer) return;
+            this.timer = setInterval(() => {
+              const entries = [...this.targets].map((target) => ({
+                target, contentRect: target.getBoundingClientRect(),
+                borderBoxSize: [], contentBoxSize: [], devicePixelContentBoxSize: [],
+              }));
+              if (entries.length) this.callback(entries, this);
+            }, 100);
+          }
+        };
+        window.__NativeResizeObserver = NativeResizeObserver;
+
+        const callbacks = new Map();
+        let handle = 0;
+        window.requestAnimationFrame = (fn) => {
+          const id = ++handle;
+          callbacks.set(id, setTimeout(() => {
+            callbacks.delete(id);
+            window.__frames++;
+            fn(performance.now());
+          }, 33));
+          return id;
+        };
+        window.cancelAnimationFrame = (id) => {
+          clearTimeout(callbacks.get(id));
+          callbacks.delete(id);
+        };
+      }
+
+      const script = document.createElement('script');
+      // Served verbatim out of `public/`, cache-busted so a rebuild is picked
+      // up by a plain reload. See `stage.js` for why it is not beside this file.
+      script.src = `/__ft-harness/plugin.js?t=${Date.now()}`;
+      document.body.appendChild(script);
+
+      /**
+       * Mirror the report into the DOM.
+       *
+       * Headless Chrome (`--dump-dom`) is the one place this view can be driven
+       * with a *visible* document, which is what a rAF-based render loop and a
+       * ResizeObserver-gated renderer need. There is no console to read there,
+       * so the numbers that matter are written where the dump will show them.
+       */
+      const summarise = () => {
+        const labels = [...document.querySelectorAll('.ft-label')];
+        const shown = labels.filter((n) => n.style.opacity === '1');
+        say([
+          `events=${log.events.length}`,
+          `cases=${log.traces.length}`,
+          `queries=${window.__sql.length}`,
+          `sqlErrors=${window.__errors.length}`,
+          `thrown=${window.__thrown.length}`,
+          `frames=${window.__frames ?? 0}`,
+          `backend=${document.querySelector('.ft-backend')?.textContent ?? '-'}`,
+          `labels=${shown.length}/${labels.length}`,
+          `shown=[${shown.map((n) => n.textContent).join(' | ')}]`,
+          window.__errors.length ? `ERR ${window.__errors[0].message}` : '',
+          window.__thrown.length ? `THROWN ${window.__thrown[0]}` : '',
+        ].join('\n'));
+      };
+      setInterval(summarise, 1000);
+    </script>
+  </body>
+</html>

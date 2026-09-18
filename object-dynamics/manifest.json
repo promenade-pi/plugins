@@ -1,0 +1,291 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.object-dynamics",
+  "name": "Object Dynamics",
+  "version": "0.1.3",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "A family of independent object-centric exploration views over an OCEL 2.0 log: Multiplicity, Type Signatures, Lifecycle Repetition, Activity Timing, Attribute History, Attribute Distribution, plus an optional Overview. Each opens as its own dockable panel — there is no shared tabbed shell — and every aggregation runs as SQL against the log's own relational tables, never materialised wholesale into the browser.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.object-dynamics.overview",
+      "label": "Object Dynamics · Overview",
+      "entry": "overview.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ],
+      "ownsControls": true
+    },
+    {
+      "id": "run.promenade.object-dynamics.multiplicity",
+      "label": "Object Dynamics · Multiplicity",
+      "entry": "multiplicity.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ],
+      "ownsControls": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "matrix",
+              "detail"
+            ],
+            "default": "matrix",
+            "title": "Mode"
+          },
+          "activity": {
+            "type": "string",
+            "default": "",
+            "title": "Activity"
+          },
+          "objectType": {
+            "type": "string",
+            "default": "",
+            "title": "Object type"
+          }
+        }
+      }
+    },
+    {
+      "id": "run.promenade.object-dynamics.type-signatures",
+      "label": "Object Dynamics · Type Signatures",
+      "entry": "type-signatures.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ],
+      "ownsControls": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "minFrequency": {
+            "type": "number",
+            "default": 0,
+            "title": "Minimum frequency"
+          },
+          "showAll": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show all signatures"
+          },
+          "activityFilter": {
+            "type": "array",
+            "default": [],
+            "title": "Activity filter"
+          }
+        }
+      }
+    },
+    {
+      "id": "run.promenade.object-dynamics.lifecycle-repetition",
+      "label": "Object Dynamics · Lifecycle Repetition",
+      "entry": "lifecycle-repetition.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ],
+      "ownsControls": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectType": {
+            "type": "string",
+            "default": "",
+            "title": "Object type"
+          },
+          "displayMode": {
+            "type": "string",
+            "enum": [
+              "absolute",
+              "percentage"
+            ],
+            "default": "percentage",
+            "title": "Display"
+          },
+          "onlyRepeated": {
+            "type": "boolean",
+            "default": false,
+            "title": "Only repeated activities"
+          }
+        },
+        "required": [
+          "objectType"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.object-dynamics.activity-timing",
+      "label": "Object Dynamics · Activity Timing",
+      "entry": "activity-timing.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ],
+      "ownsControls": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "activityA": {
+            "type": "string",
+            "default": "",
+            "title": "Activity A"
+          },
+          "activityB": {
+            "type": "string",
+            "default": "",
+            "title": "Activity B"
+          },
+          "objectType": {
+            "type": "string",
+            "default": "",
+            "title": "Object type"
+          },
+          "pairing": {
+            "type": "string",
+            "enum": [
+              "nextAfter",
+              "firstAfter",
+              "allPairs"
+            ],
+            "default": "nextAfter",
+            "title": "Pairing"
+          },
+          "durationUnit": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "seconds",
+              "minutes",
+              "hours",
+              "days"
+            ],
+            "default": "auto",
+            "title": "Duration unit"
+          }
+        },
+        "required": [
+          "activityA",
+          "activityB",
+          "objectType"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.object-dynamics.attribute-distribution",
+      "label": "Object Dynamics · Attribute Distribution",
+      "entry": "attribute-distribution.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ],
+      "ownsControls": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "attributeMode": {
+            "type": "string",
+            "enum": [
+              "event",
+              "object"
+            ],
+            "default": "event",
+            "title": "Mode"
+          },
+          "activities": {
+            "type": "array",
+            "default": [],
+            "title": "Activities"
+          },
+          "eventAttribute": {
+            "type": "string",
+            "default": "",
+            "title": "Event attribute"
+          },
+          "objectType": {
+            "type": "string",
+            "default": "",
+            "title": "Object type"
+          },
+          "objectAttribute": {
+            "type": "string",
+            "default": "",
+            "title": "Object attribute"
+          }
+        }
+      }
+    },
+    {
+      "id": "run.promenade.object-dynamics.attribute-history",
+      "label": "Object Dynamics · Attribute History",
+      "entry": "attribute-history.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ],
+      "ownsControls": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectType": {
+            "type": "string",
+            "default": "",
+            "title": "Object type"
+          },
+          "objectId": {
+            "type": "string",
+            "default": "",
+            "title": "Object"
+          },
+          "attributes": {
+            "type": "array",
+            "default": [],
+            "title": "Attributes"
+          },
+          "entries": {
+            "type": "string",
+            "enum": [
+              "changes",
+              "object_events",
+              "all_events"
+            ],
+            "default": "object_events",
+            "title": "Event context"
+          }
+        },
+        "required": [
+          "objectType",
+          "objectId"
+        ]
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog"
+  ],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "object-centric",
+    "ocel",
+    "multiplicity",
+    "type-signatures",
+    "lifecycle",
+    "repetition",
+    "timing",
+    "attribute-history",
+    "attribute-distribution",
+    "view"
+  ],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

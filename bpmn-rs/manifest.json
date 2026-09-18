@@ -1,0 +1,284 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.bpmn",
+  "name": "BPMN 2.0",
+  "version": "0.6.1",
+  "license": "MIT",
+  "description": "BPMN 2.0 support: convert a process tree or a Petri net to a BPMN diagram, convert a BPMN diagram back to a Petri net or process tree, replace inclusive OR-joins with equivalent exclusive/parallel gateways, import a BPMN 2.0 XML file, and a React Flow view with BPMN 2.0 XML export. Pure control-flow BPMN only (tasks, start/end events, exclusive/parallel/inclusive gateways, sequence flows) — no pools, lanes, message flows, sub-processes, or boundary events.",
+  "apiVersion": "1",
+  "artifactTypes": [
+    {
+      "id": "Bpmn",
+      "label": "BPMN Diagram",
+      "shortLabel": "BPMN",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.bpmn.from-process-tree",
+      "label": "Process Tree → BPMN",
+      "description": "Direct recursive translation of a process tree into a BPMN diagram — block-structured by construction, since a process tree already is. Rejects nodes using the 'interleaving' or 'partialorder' operators, which have no BPMN equivalent.",
+      "runtime": "wasm",
+      "entry": "promenade_bpmn.js",
+      "wasm": "promenade_bpmn_bg.wasm",
+      "memory": "low",
+      "kernel": {
+        "class": "FromProcessTree",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "tree",
+          "type": "ProcessTree",
+          "required": true,
+          "label": "a Process Tree"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bpmn",
+          "type": "Bpmn"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "id": "run.promenade.bpmn.from-petrinet",
+      "label": "Petri Net → BPMN",
+      "description": "Converts an Accepting Petri Net to a BPMN diagram. Clean and block-structured for a sound, free-choice workflow net; still converts (behavior-preserving) otherwise, flagging the result as not block-structured.",
+      "runtime": "wasm",
+      "entry": "promenade_bpmn.js",
+      "wasm": "promenade_bpmn_bg.wasm",
+      "memory": "low",
+      "kernel": {
+        "class": "FromPetriNet",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "net",
+          "type": "AcceptingPetriNet",
+          "required": true,
+          "label": "an Accepting Petri Net"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bpmn",
+          "type": "Bpmn"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "id": "run.promenade.bpmn.import",
+      "label": "Import BPMN 2.0 XML…",
+      "description": "Imports a BPMN 2.0 XML file as a Bpmn diagram artifact. A construct outside this plugin's control-flow subset (pools, message flows, sub-processes, boundary/intermediate events) is represented as an opaque pass-through task, with a warning naming each one -- never silently dropped.",
+      "runtime": "wasm",
+      "entry": "promenade_bpmn.js",
+      "wasm": "promenade_bpmn_bg.wasm",
+      "memory": "low",
+      "kernel": {
+        "class": "ImportXml",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "bpmn",
+          "type": "Bpmn"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "xml": {
+            "type": "file",
+            "title": "BPMN 2.0 XML file",
+            "accept": ".bpmn,.xml",
+            "primary": true
+          }
+        },
+        "required": [
+          "xml"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.bpmn.export-xml",
+      "label": "BPMN 2.0 XML",
+      "description": "Exports a BPMN diagram as plain BPMN 2.0 XML (no diagram-interchange layout -- open the diagram's own view for an export that includes the drawn positions). Still fully spec-valid; most tools apply their own auto-layout on import.",
+      "runtime": "wasm",
+      "entry": "promenade_bpmn.js",
+      "wasm": "promenade_bpmn_bg.wasm",
+      "memory": "low",
+      "kernel": {
+        "class": "ExportXml",
+        "abi": "value-finalize/1"
+      },
+      "exportsFile": true,
+      "inputs": [
+        {
+          "name": "bpmn",
+          "type": "Bpmn",
+          "required": true,
+          "label": "a BPMN Diagram"
+        }
+      ],
+      "outputs": [],
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "id": "run.promenade.bpmn.replace-or-joins",
+      "label": "Replace OR-joins",
+      "description": "Rewrites every inclusive (OR) join that can be proven equivalent to a combination of exclusive and parallel gateways, following Favre and Völzer's local replacement: the join's incoming flows are grouped so that each group is internally mutually exclusive and the groups are always concurrent, giving one exclusive join per group under one parallel join. An inclusive join whose flows cannot be grouped that way has no local replacement at all — it is left in place and said so, never guessed at. Needed before \"BPMN → Petri net\", which has no translation for an inclusive gateway.",
+      "runtime": "wasm",
+      "entry": "promenade_bpmn.js",
+      "wasm": "promenade_bpmn_bg.wasm",
+      "memory": "low",
+      "kernel": {
+        "class": "ReplaceOrJoins",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "bpmn",
+          "type": "Bpmn",
+          "required": true,
+          "label": "a BPMN diagram"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bpmn",
+          "type": "Bpmn"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "id": "run.promenade.bpmn.to-petrinet",
+      "label": "BPMN → Petri Net",
+      "description": "Converts a BPMN diagram to an Accepting Petri Net. A block-structured diagram gets the compact synthesis: one alternating place/transition pattern per XOR/AND block. Anything else — which is most discovered models — gets the direct mapping instead (a place per sequence flow, a transition per task, one transition per branch of an exclusive gateway), so a model that does not nest still converts. Inclusive (OR) gateways have no translation either way: run \"Replace OR-joins\" first.",
+      "runtime": "wasm",
+      "entry": "promenade_bpmn.js",
+      "wasm": "promenade_bpmn_bg.wasm",
+      "memory": "low",
+      "kernel": {
+        "class": "ToPetriNet",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "bpmn",
+          "type": "Bpmn",
+          "required": true,
+          "label": "a BPMN Diagram"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "net",
+          "type": "AcceptingPetriNet"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "id": "run.promenade.bpmn.to-process-tree",
+      "label": "BPMN → Process Tree",
+      "description": "Converts a BPMN diagram to a Process Tree via block-structure decomposition. Solid only when the diagram is block-structured (single start/end event, every gateway pair matched, every loop the canonical do-redo shape). Rejects with a diagnostic naming the unreducible region rather than approximating.",
+      "runtime": "wasm",
+      "entry": "promenade_bpmn.js",
+      "wasm": "promenade_bpmn_bg.wasm",
+      "memory": "low",
+      "kernel": {
+        "class": "ToProcessTree",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "bpmn",
+          "type": "Bpmn",
+          "required": true,
+          "label": "a BPMN Diagram"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tree",
+          "type": "ProcessTree"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.bpmn.view",
+      "label": "BPMN (React Flow)",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "Bpmn"
+      ]
+    }
+  ],
+  "consumes": [
+    "ProcessTree",
+    "AcceptingPetriNet",
+    "Bpmn"
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "keywords": [
+    "bpmn",
+    "process-tree",
+    "petri-net",
+    "conversion",
+    "rust",
+    "react-flow",
+    "elkjs"
+  ],
+  "readme": "README.md",
+  "author": "Promenade Team",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "citation": {
+    "text": "Favre, C. and Völzer, H. (2012). The Difficulty of Replacing an Inclusive OR-Join. BPM 2012, LNCS 7481, 156-171 — the basis of the \"Replace OR-joins\" action. The BPMN 2.0 notation itself is OMG's; the Petri net and process tree conversions are the standard structural ones.",
+    "doi": "10.1007/978-3-642-32885-5_12",
+    "bibtex": "@inproceedings{favre2012difficulty,\n  title     = {The Difficulty of Replacing an Inclusive OR-Join},\n  author    = {Favre, C{\\'e}dric and V{\\\"o}lzer, Hagen},\n  booktitle = {Business Process Management (BPM 2012)},\n  series    = {LNCS}, volume = {7481}, pages = {156--171}, year = {2012},\n  doi       = {10.1007/978-3-642-32885-5_12}\n}"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocdfg-pm4py",
+  "name": "OC-DFG Discovery (pm4py)",
+  "version": "0.1.0",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Discovers an Object-Centric Directly-Follows Graph directly from an OCEL 2.0 log using pm4py.discover_ocdfg, run in Pyodide. Produces the same OCDFG artifact as Promenade's built-in SQL discovery, so it opens in either installed OC-DFG view — a second discovery backend for comparison.",
+  "runtime": "pyodide",
+  "entry": "plugin.py",
+  "pythonDeps": [
+    "numpy",
+    "pandas",
+    "scipy",
+    "networkx",
+    "lxml",
+    "matplotlib",
+    "pytz",
+    "tqdm",
+    "pyarrow",
+    "graphviz",
+    "deprecation",
+    "intervaltree",
+    "sortedcontainers",
+    "pm4py"
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.ocdfg-pm4py.discover",
+      "label": "Discover OC-DFG (pm4py)",
+      "memory": "high",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ocdfg",
+          "type": "OCDFG"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectTypes": {
+            "type": "array",
+            "title": "Object types",
+            "description": "Which object types participate in discovery. Empty means every object type present in the log.",
+            "default": [],
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "maxEvents": {
+            "type": "integer",
+            "title": "Event limit",
+            "description": "A safety ceiling, not a normal control. When reached, the result is marked as truncated.",
+            "default": 2000000,
+            "minimum": 1000,
+            "maximum": 5000000,
+            "multipleOf": 1000,
+            "maxFrom": "events",
+            "primary": true
+          }
+        },
+        "required": [
+          "maxEvents"
+        ]
+      }
+    }
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "keywords": [
+    "discovery",
+    "object-centric",
+    "dfg",
+    "ocel",
+    "pm4py",
+    "python"
+  ],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

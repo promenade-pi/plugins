@@ -1,0 +1,17 @@
+[package]
+name = "net-reduce-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Structural reduction rules for accepting Petri nets, independent of any host"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+soundness-core = { path = "../../../soundness-rs/crates/soundness-core" }
+
+[dev-dependencies]
+serde_json = "1"
+# The invariants compare the language of a net with the language of its
+# reduction, and check that a sound net stays sound. Both crates belong to
+# other plugins and neither knows this one exists.
+playout-core = { path = "../../../playout-rs/crates/playout-core" }

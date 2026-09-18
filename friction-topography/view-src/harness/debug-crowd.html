@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Friction Topography label-jitter debug harness</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #05080d; }
+      body { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      #root { position: absolute; inset: 0; }
+      #probe {
+        position: fixed; bottom: 0; left: 0; z-index: 99;
+        background: #111; color: #0f0; font: 10px ui-monospace, monospace;
+        padding: 3px 7px; white-space: pre; max-width: 60vw;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="probe">booting…</div>
+    <script type="module">
+      /**
+       * DEBUG-ONLY harness: a densely interconnected, Sepsis/Logistics-scale
+       * synthetic log (16 activities, a busy central cluster many of them
+       * connect through), used specifically to chase the "labels jump on
+       * hover" report, which never reproduced on the plugin's small 9-station
+       * default fixture - too few labels for any collision ambiguity to ever
+       * arise. `window.__ftDebugLabels = true` here turns on the position-
+       * change logging built into `Labels.tsx` (`window.__ftLabelDebugLog`).
+       *
+       * Not part of the regular harness (`index.html`) so as not to disturb
+       * the other regression scripts, which reference that fixture's exact
+       * activity names.
+       */
+      window.__ftDebugLabels = true;
+
+      import * as duckdb from '@duckdb/duckdb-wasm';
+      import wasm_eh from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
+      import worker_eh from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
+
+      window.__thrown = [];
+      window.addEventListener('error', (e) => { window.__thrown.push(String(e.error?.stack ?? e.message)); });
+      window.addEventListener('unhandledrejection', (e) => { window.__thrown.push(String(e.reason?.stack ?? e.reason)); });
+
+      const probe = document.getElementById('probe');
+      const say = (text) => { probe.textContent = text; };
+
+      /**
+       * A 16-activity log with a busy interconnected cluster (mimicking a
+       * healthcare-style process: several lab/triage steps that recur and
+       * interleave in almost any order), so the discovered layout genuinely
+       * crowds several stations close together - the condition under which a
+       * collision-arbitration bug would actually have room to show itself.
+       */
+      function makeLog() {
+        let s = 424242;
+        const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 1e6) / 1e6; };
+        const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
+        const H = 3_600_000;
+        const events = [];
+        const traces = [];
+        let t = Date.UTC(2026, 0, 5, 6, 0, 0);
+
+        const hub = ['Triage', 'LacticAcid', 'Leucocytes', 'CRP', 'IV Antibiotics', 'IV Liquid'];
+        const resources = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6'];
+        const releases = ['Release A', 'Release B', 'Release C', 'Release D'];
+
+        for (let c = 0; c < 900; c++) {
+          traces.push({ trace_idx: c, case_id: `CASE-${1000 + c}` });
+          let now = t + Math.floor(rnd() * 4 * H);
+          const push = (activity, wait, resource) => {
+            now += wait;
+            events.push({ trace_idx: c, activity, ts: now, resource: resource ?? '' });
+          };
+
+          push('ER Registration', 0, pick(resources));
+          push('ER Triage', 0.2 * H + rnd() * 0.8 * H, pick(resources));
+          if (rnd() < 0.6) push('ER Sepsis Triage', 0.2 * H + rnd() * 0.6 * H, pick(resources));
+
+          // The busy hub: 3-9 interleaved, repeatable steps in near-random
+          // order, which is exactly what produces a dense, crowded plan.
+          const hubSteps = 3 + Math.floor(rnd() * 7);
+          for (let k = 0; k < hubSteps; k++) {
+            push(pick(hub), 0.3 * H + rnd() * 3 * H, pick(resources));
+          }
+
+          if (rnd() < 0.35) push('Admission NC', 1 * H + rnd() * 4 * H, pick(resources));
+          else if (rnd() < 0.5) push('Admission IC', 1 * H + rnd() * 4 * H, pick(resources));
+
+          if (rnd() < 0.12) {
+            push('Return ER', 20 * H + rnd() * 80 * H, pick(resources));
+            for (let k = 0; k < 2 + Math.floor(rnd() * 3); k++) push(pick(hub), 0.3 * H + rnd() * 2 * H, pick(resources));
+          }
+
+          push(pick(releases), 2 * H + rnd() * 20 * H, pick(resources));
+          t += 1.8 * H;
+        }
+
+        events.sort((a, b) => a.ts - b.ts || a.trace_idx - b.trace_idx);
+        events.forEach((e, i) => { e.event_idx = i; });
+        return { events, traces };
+      }
+
+      say('booting duckdb…');
+      const db = new duckdb.AsyncDuckDB(new duckdb.VoidLogger(), new Worker(worker_eh, { type: 'classic' }));
+      await db.instantiate(wasm_eh);
+      const conn = await db.connect();
+
+      const log = makeLog();
+      const q = (v) => (v == null ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`);
+
+      await conn.query(
+        'CREATE TABLE harness__event (event_idx BIGINT, trace_idx BIGINT, activity VARCHAR, ' +
+        'ts TIMESTAMP, lifecycle VARCHAR, resource VARCHAR)'
+      );
+      await conn.query('CREATE TABLE harness__trace (trace_idx BIGINT, case_id VARCHAR)');
+      await conn.query('CREATE TABLE harness__trace_attr (trace_idx BIGINT, key VARCHAR, type VARCHAR, value VARCHAR)');
+
+      for (let i = 0; i < log.events.length; i += 800) {
+        const rows = log.events.slice(i, i + 800).map((e) =>
+          `(${e.event_idx}, ${e.trace_idx}, ${q(e.activity)}, epoch_ms(${e.ts}::BIGINT), 'complete', ${q(e.resource)})`
+        );
+        await conn.query(`INSERT INTO harness__event VALUES ${rows.join(',')}`);
+      }
+      await conn.query(
+        `INSERT INTO harness__trace VALUES ${log.traces.map((tr) => `(${tr.trace_idx}, ${q(tr.case_id)})`).join(',')}`
+      );
+
+      function toColumns(table) {
+        const columns = {};
+        for (const field of table.schema.fields) {
+          const vec = table.getChild(field.name);
+          const arr = vec.toArray();
+          if (ArrayBuffer.isView(arr) && !(arr instanceof BigInt64Array) && !(arr instanceof BigUint64Array)) {
+            columns[field.name] = arr.slice();
+          } else if (arr instanceof BigInt64Array || arr instanceof BigUint64Array) {
+            const f = new Float64Array(arr.length);
+            for (let i = 0; i < arr.length; i++) f[i] = Number(arr[i]);
+            columns[field.name] = f;
+          } else {
+            const out = new Array(table.numRows);
+            for (let i = 0; i < table.numRows; i++) {
+              const v = vec.get(i);
+              out[i] = typeof v === 'bigint' ? Number(v) : v == null ? null : String(v);
+            }
+            columns[field.name] = out;
+          }
+        }
+        return { numRows: table.numRows, columns };
+      }
+
+      const theme = {
+        bg: '#14171c', 'bg-soft': '#1c2027', border: '#333a44',
+        text: '#e6e9ee', 'text-dim': '#98a2b3', accent: '#5b8cff',
+      };
+      const handlers = {};
+      window.__sql = [];
+      window.__errors = [];
+      let cached = null;
+
+      window.promenade = {
+        sql: async (text) => {
+          try {
+            const table = await conn.query(text);
+            const result = toColumns(table);
+            window.__sql.push({ rows: result.numRows });
+            return result;
+          } catch (err) {
+            window.__errors.push({ message: String(err), text });
+            throw err;
+          }
+        },
+        sqlCancelable: (text) => ({ promise: window.promenade.sql(text), cancel: () => {} }),
+        artifact: () => ({
+          id: 'harness', name: 'Debug crowd log', type: 'TraditionalEventLog',
+          tables: { event: 'harness__event', trace: 'harness__trace' },
+          value: null,
+        }),
+        theme: () => theme,
+        color: () => '#888',
+        select: (items) => { window.__selected = items; },
+        setParams: (patch) => { window.__written = window.__written || []; window.__written.push(patch); },
+        cachedState: async () => cached,
+        setCachedState: (value) => { cached = value; },
+        on: (event, fn) => { handlers[event] = fn; },
+        ready: () => { window.__ready = true; },
+      };
+      window.__setParams = (patch) => handlers.params?.(patch);
+
+      // rAF/ResizeObserver shims: identical rationale to the main harness -
+      // a hidden/backgrounded automation pane performs no rendering
+      // lifecycle at all, so R3F never even sizes its canvas without these.
+      if (!location.search.includes('norafshim')) {
+        window.__frames = 0;
+        const nativeRaf = window.requestAnimationFrame.bind(window);
+        window.requestAnimationFrame = (fn) => nativeRaf((t) => { window.__frames++; fn(t); });
+        window.ResizeObserver = class {
+          constructor(cb) { this.cb = cb; this.t = new Set(); this.i = 0; }
+          observe(target) {
+            this.t.add(target);
+            if (!this.i) {
+              this.i = setInterval(() => {
+                const entries = [...this.t].map((tg) => ({ target: tg, contentRect: tg.getBoundingClientRect() }));
+                if (entries.length) this.cb(entries, this);
+              }, 100);
+            }
+          }
+          unobserve(target) { this.t.delete(target); }
+          disconnect() { this.t.clear(); clearInterval(this.i); this.i = 0; }
+        };
+      }
+
+      const counts = await conn.query('SELECT COUNT(*) AS n FROM harness__event');
+      const acts = await conn.query('SELECT COUNT(DISTINCT activity) AS n FROM harness__event');
+      say(`${Number(counts.getChildAt(0).get(0))} events · ${Number(acts.getChildAt(0).get(0))} activities · loading view…`);
+
+      const script = document.createElement('script');
+      script.src = `/__ft-harness/plugin.js?t=${Date.now()}`;
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>

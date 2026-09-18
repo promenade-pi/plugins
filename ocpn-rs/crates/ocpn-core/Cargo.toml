@@ -1,0 +1,9 @@
+[package]
+name = "ocpn-core"
+version = "0.1.0"
+edition = "2021"
+description = "The Object-Centric Petri Net model — places, transitions, arcs, object types. Pure Rust, no host, no browser, no layout."
+license = "MIT"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }

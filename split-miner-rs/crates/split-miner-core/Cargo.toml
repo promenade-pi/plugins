@@ -1,0 +1,19 @@
+[package]
+name = "split-miner-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Split Miner (Augusto et al.) — directly-follows graph to BPMN, independent of any host"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+# The BPMN model is bpmn-rs's, reused rather than redeclared: this crate emits
+# the `Bpmn` artifact that plugin's view renders and its conversions consume,
+# so the two must be the same struct, not two schemas that agree today.
+bpmn-core = { path = "../../../bpmn-rs/crates/bpmn-core" }
+
+[dev-dependencies]
+serde_json = "1"
+# The invariants check this crate's headline claim against an implementation
+# that knows nothing about Split Miner: the soundness plugin's own core.
+soundness-core = { path = "../../../soundness-rs/crates/soundness-core" }

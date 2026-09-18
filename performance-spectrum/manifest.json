@@ -1,0 +1,135 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.performance-spectrum",
+  "name": "Performance Spectrum",
+  "version": "0.1.9",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Fine-grained performance analysis after Denisov, Fahland, and van der Aalst: every observed directly-follows segment is plotted over calendar time and colored by its duration class, exposing batching, queuing, slowdowns, and drift hidden by aggregated averages. On OCELs it can consume source-bound Interaction Atlas lasso cohorts.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.performance-spectrum.view",
+      "label": "Performance Spectrum",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "interactionSelection": "interaction-cohort-v1",
+      "params": {
+        "type": "object",
+        "properties": {
+          "activities": {
+            "type": "array",
+            "title": "Activities",
+            "description": "Empty means all activities. Selected activities restrict the displayed directly-follows segments without changing case/object lifecycles.",
+            "default": [],
+            "optionsFrom": {
+              "sql": "SELECT activity AS value, COUNT(*) AS n FROM {event} WHERE activity IS NOT NULL GROUP BY 1 ORDER BY n DESC, activity",
+              "countField": "n",
+              "colorDomain": "activity"
+            }
+          },
+          "objectTypes": {
+            "type": "array",
+            "title": "Object types",
+            "description": "Empty means all object types. Choose one or more OCEL lifecycles to include.",
+            "default": [],
+            "onlyFor": [
+              "ObjectCentricEventLog"
+            ],
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} WHERE object_type IS NOT NULL GROUP BY 1 ORDER BY n DESC, object_type",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "timeStart": {
+            "type": "string",
+            "title": "Time range",
+            "description": "Limit the spectrum to event flows within a calendar-time window. The selected window is applied before segment sampling.",
+            "default": "",
+            "cheap": true,
+            "control": "timeRange",
+            "rangeEnd": "timeEnd"
+          },
+          "timeEnd": {
+            "type": "string",
+            "title": "Until time",
+            "default": "",
+            "cheap": true,
+            "control": "timeRangeEnd"
+          },
+          "maxSegments": {
+            "type": "integer",
+            "title": "Sampled segments",
+            "description": "Maximum number of individual directly-follows segments sent to the canvas. Sampling preserves the fine-grained spectrum while keeping very large logs responsive.",
+            "default": 60000,
+            "minimum": 5000,
+            "maximum": 200000,
+            "multipleOf": 1000,
+            "primary": true
+          },
+          "maxBands": {
+            "type": "integer",
+            "title": "Visible segments",
+            "description": "Shows the most frequent activity-to-activity segments. The chart draws every sampled occurrence of the visible segments.",
+            "default": 18,
+            "minimum": 3,
+            "maximum": 80,
+            "cheap": true
+          },
+          "showGrid": {
+            "type": "boolean",
+            "title": "Show time grid",
+            "default": true,
+            "cheap": true
+          },
+          "showLabels": {
+            "type": "boolean",
+            "title": "Show segment labels",
+            "default": true,
+            "cheap": true
+          },
+          "showHover": {
+            "type": "boolean",
+            "title": "Hover details",
+            "description": "Show the closest observed flow on hover. Disable this for the smoothest inspection on dense spectra.",
+            "default": true,
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "TraditionalEventLog",
+    "ObjectCentricEventLog"
+  ],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "keywords": [
+    "performance",
+    "performance-spectrum",
+    "visual-analytics",
+    "process-mining",
+    "time",
+    "view"
+  ],
+  "homepage": "https://multiprocessmining.org/2020/10/06/the-performance-spectrum/",
+  "docs": [
+    {
+      "path": "README.md",
+      "title": "Read me"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

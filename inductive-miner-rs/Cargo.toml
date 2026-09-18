@@ -1,0 +1,27 @@
+[workspace]
+members = ["crates/inductive-miner-core", "crates/inductive-miner-cli"]
+resolver = "2"
+
+# The wasm kernel is the workspace root package, so `wasm-pack build` and
+# `package.sh` find `pkg/` exactly where the other Promenade plugins put it.
+[package]
+name = "promenade-inductive-miner"
+version = "0.1.2"
+edition = "2021"
+description = "Inductive Miner (IM / IMf): traditional event log to a process tree"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+inductive-miner-core = { path = "crates/inductive-miner-core" }
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

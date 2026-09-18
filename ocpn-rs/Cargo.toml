@@ -1,0 +1,30 @@
+[workspace]
+members = ["crates/ocpn-core", "crates/ocpn-discovery", "crates/ocpn-cli"]
+resolver = "2"
+
+# The wasm kernel is the workspace root package, so `wasm-pack build` and
+# `package.sh` find `pkg/` exactly where the other Promenade plugins put it
+# (see plugins/inductive-miner-rs, the one other plugin with this split).
+[package]
+name = "promenade-ocpn"
+version = "0.1.0"
+edition = "2021"
+description = "Object-Centric Petri Net discovery: an OCEL, per object type, to one merged OCPN"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ocpn-discovery = { path = "crates/ocpn-discovery" }
+ocpn-core = { path = "crates/ocpn-core" }
+inductive-miner-core = { path = "../inductive-miner-rs/crates/inductive-miner-core" }
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Raw Artifact Viewer harness</title>
+    <style>
+      /* The closed token list the host injects into the real frame. */
+      :root {
+        --bg: #ffffff; --bg-soft: #f7f8fa; --bg-sunken: #eef0f4;
+        --border: #d9dce3; --text: #1c2027; --text-dim: #767d8a;
+        --accent: #3b6fe0; --accent-soft: #e7eefc;
+        --danger: #d64550; --warn: #d98b17; --ok: #2f9e5f;
+      }
+      html, body { margin: 0; height: 100%; overflow: hidden; }
+      body { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      #root { position: absolute; inset: 0 0 22px 0; }
+      #probe {
+        position: fixed; left: 0; right: 0; bottom: 0; height: 22px; z-index: 99;
+        background: #111; color: #6f6; font: 11px ui-monospace, monospace;
+        padding: 3px 8px; white-space: pre; overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="probe">booting…</div>
+    <script type="module">
+      /**
+       * A dev harness for the Raw Artifact Viewer.
+       *
+       * `window.promenade` here is a stub in one respect only — it is not
+       * reached over a MessagePort — and is otherwise the real thing: every
+       * call lands on the same `dataClient` the host's own bridge calls, so
+       * the worker's `artifactFiles`/`artifactFile` handlers, the DuckDB
+       * relations they mount and the Parquet files behind them are all
+       * genuinely exercised. Arrow results are converted the same way
+       * `PluginPanel.toColumns` converts them.
+       */
+      import { dataClient } from '/src/host/data/client.ts';
+
+      const probe = document.getElementById('probe');
+      const say = (m) => { probe.textContent = m; };
+
+      function toColumns(table) {
+        const columns = {};
+        for (const field of table.schema.fields) {
+          const vec = table.getChild(field.name);
+          const out = new Array(table.numRows);
+          for (let i = 0; i < table.numRows; i++) {
+            const v = vec.get(i);
+            out[i] = typeof v === 'bigint' ? Number(v) : v == null ? null : String(v);
+          }
+          columns[field.name] = out;
+        }
+        return { numRows: table.numRows, columns };
+      }
+
+      say('booting DuckDB…');
+      await dataClient.boot();
+      const { catalog } = await dataClient.catalog();
+      let artifact = Object.values(catalog.artifacts)[0];
+      if (!artifact) {
+        say('no artifact in this workspace — import one in the app first');
+        throw new Error('no artifact');
+      }
+      // `?artifact=<id>` picks a specific one; otherwise the first.
+      const wanted = new URLSearchParams(location.search).get('artifact');
+      if (wanted && catalog.artifacts[wanted]) artifact = catalog.artifacts[wanted];
+
+      let cached = null;
+      window.promenade = {
+        sql: (text) => dataClient.sql(text).then(toColumns),
+        sqlCancelable: (text) => ({ promise: dataClient.sql(text).then(toColumns), cancel() {} }),
+        files: () => dataClient.artifactFiles(artifact.id),
+        openFile: (path, maxBytes) => dataClient.artifactFile(artifact.id, path, maxBytes),
+        artifact: () => ({ id: artifact.id, name: artifact.name, type: artifact.type, tables: {} }),
+        theme: () => ({}),
+        color: () => '#888',
+        select() {},
+        setParams() {},
+        cachedState: () => Promise.resolve(cached),
+        setCachedState: (v) => { cached = v; },
+        on() {},
+        ready: () => say(`ready · ${artifact.name} · ${artifact.id}`),
+      };
+
+      /**
+       * What a driver asserts on, instead of on a picture: the numbers and
+       * text the view is actually showing right now.
+       */
+      window.__probe = () => {
+        const text = (sel) => [...document.querySelectorAll(sel)].map((e) => e.textContent.trim());
+        const table = document.querySelector('.raw-table');
+        const bodyRows = table ? [...table.querySelectorAll('tbody tr')] : [];
+        return {
+          tree: text('.raw-row'),
+          selectedTreeRow: document.querySelector('.raw-row.sel')?.textContent.trim() ?? null,
+          path: document.querySelector('.raw-path')?.textContent ?? null,
+          chips: text('.raw-chip'),
+          headers: table ? [...table.querySelectorAll('thead th')].map((th) => th.textContent.trim()) : [],
+          rowCount: bodyRows.length,
+          firstRow: bodyRows[0] ? [...bodyRows[0].children].map((td) => td.textContent) : [],
+          lastRow: bodyRows.length ? [...bodyRows[bodyRows.length - 1].children].map((td) => td.textContent) : [],
+          range: document.querySelector('.raw-range')?.textContent ?? null,
+          pageSize: document.querySelector('.raw-foot select')?.value ?? null,
+          text: document.querySelector('.raw-text')?.textContent.slice(0, 200) ?? null,
+          note: document.querySelector('.raw-note')?.textContent ?? null,
+          error: document.querySelector('.raw-err')?.textContent ?? null,
+          cached,
+        };
+      };
+
+      /** Clicks the first element whose text matches, and reports what it hit. */
+      window.__click = (selector, match) => {
+        const el = [...document.querySelectorAll(selector)]
+          .find((e) => (match == null ? true : new RegExp(match).test(e.textContent)));
+        if (!el) return `no match: ${selector} ~ ${match}`;
+        el.click();
+        return el.textContent.trim().slice(0, 60);
+      };
+
+      // The bundle is a classic-script IIFE (the sandboxed frame evals it, and
+      // this loads the very same file), so it goes in with a plain <script>
+      // after `promenade` exists.
+      const s = document.createElement('script');
+      s.src = './plugin.js';
+      document.body.appendChild(s);
+    </script>
+  </body>
+</html>

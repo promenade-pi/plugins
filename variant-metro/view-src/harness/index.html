@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Variant Metro view harness</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #fff; }
+      body { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      #root { position: absolute; inset: 0; }
+      #probe {
+        position: fixed; bottom: 0; left: 0; z-index: 99;
+        background: #111; color: #0f0; font: 10px ui-monospace, monospace;
+        padding: 3px 7px; white-space: pre; max-width: 70vw;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="probe">booting…</div>
+    <script>
+      /**
+       * A throwaway harness for the sandboxed view.
+       *
+       * The shipped view runs in an opaque-origin iframe under
+       * `sandbox="allow-scripts"`, where a driver's synthetic events never
+       * arrive and nothing outside can read its DOM. This page loads the
+       * *same* bundle in an ordinary same-origin document and stubs the host
+       * API around it, so the rendering can actually be inspected and the
+       * slider actually driven.
+       *
+       * It must be driven by `harness/drive.js` (headless Chrome), not by an
+       * unattended browser pane: React Flow only mounts edges once the
+       * document performs its rendering lifecycle, and a hidden or
+       * non-compositing tab never fires `requestAnimationFrame` at all — so
+       * the view looks edge-less there when nothing is wrong with it.
+       */
+      const THEME = {
+        bg: '#ffffff', 'bg-soft': '#f6f7f9', border: '#d8dbe0',
+        text: '#1b1d21', 'text-dim': '#6b7280', accent: '#2f6df6',
+      };
+      // Stand-in for the host's own object-type colour domain: stable per
+      // value, so a screenshot is comparable across runs.
+      const PALETTE = ['#e4572e', '#17bebb', '#f2a104', '#3d5a80', '#76b041', '#8a4fff', '#0b7189', '#d1495b'];
+      const assigned = new Map();
+
+      window.__events = {};
+      window.__handlers = {};
+      // `?live` stands the harness in for a run-bound live preview: the host
+      // opens the panel for a discovery that has not finished, so `value` is
+      // the run's seed rather than an OCVariantMetro. `?params` makes ready()
+      // answer with the host's real initial burst, which is what the
+      // module-scope handler registration has to survive.
+      const LIVE = location.search.includes('live');
+      const BURST = location.search.includes('params');
+      window.promenade = {
+        artifact: () => (LIVE
+          ? {
+              id: 'live:harness', name: 'Replaying…', type: 'OCVariantMetro',
+              tables: {}, value: { inputs: { log: null } }, semantics: null,
+              runState: 'running',
+            }
+          : {
+              id: 'harness', name: 'Variant Metro', type: 'OCVariantMetro',
+              tables: {}, value: window.__payload, semantics: null,
+            }),
+        theme: () => THEME,
+        color: (_domain, value) => {
+          if (!assigned.has(value)) assigned.set(value, PALETTE[assigned.size % PALETTE.length]);
+          return assigned.get(value);
+        },
+        select: (items) => { window.__events.select = items; },
+        sql: async () => ({ numRows: 0, columns: {} }),
+        cachedState: async () => null,
+        setCachedState: () => {},
+        on: (name, fn) => { window.__handlers[name] = fn; },
+        ready: () => {
+          window.__events.ready = true;
+          // The host answers ready() synchronously with resize, theme and
+          // params — before anything a React effect could have registered.
+          if (!BURST) return;
+          window.__handlers.resize?.({ w: innerWidth, h: innerHeight });
+          window.__handlers.theme?.({ theme: THEME, colors: {} });
+          window.__handlers.params?.({
+            stationStyle: 'labels', edgeLabel: 'frequency',
+            animateFlow: false, preserveStability: true,
+          });
+        },
+      };
+
+      /** Feeds the live-preview progress channel the way PluginPanel does. */
+      window.__liveProgress = (done, total) => {
+        window.__handlers.liveRunState?.({
+          state: 'running',
+          message: `${done.toLocaleString('en')} / ${total.toLocaleString('en')} events`,
+          fraction: done / total,
+        });
+        return true;
+      };
+
+      /** What the driver reads instead of guessing from a screenshot. */
+      window.__probe = () => {
+        const panel = [...document.querySelectorAll('.react-flow__panel')].pop();
+        const loader = document.querySelector('.mm-stage');
+        const state = {
+          ready: !!window.__events.ready,
+          nodes: document.querySelectorAll('.react-flow__node').length,
+          stations: document.querySelectorAll('.react-flow__node[data-id^="station:"]').length,
+          edges: document.querySelectorAll('.react-flow__edge').length,
+          // The standby screen: present at all, and what it says.
+          loader: !!loader,
+          trains: document.querySelectorAll('.mm-train').length,
+          loaderText: loader ? loader.parentElement.innerText.replace(/\n/g, ' | ') : '',
+          readout: panel ? panel.innerText.split('\n').filter(Boolean).slice(0, 9).join(' | ') : '(no panel)',
+        };
+        document.getElementById('probe').textContent =
+          `ready=${state.ready} nodes=${state.nodes} stations=${state.stations} edges=${state.edges}`
+          + ` loader=${state.loader} trains=${state.trains}\n${state.loaderText || state.readout}`;
+        return state;
+      };
+
+      /** Moves the variant slider the way a user would, React included. */
+      window.__setVariants = (value) => {
+        const input = document.querySelector('input[type=range]');
+        const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value').set;
+        setter.call(input, String(value));
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        return { max: Number(input.max), value: Number(input.value) };
+      };
+
+      // The standby screen is by design short-lived on a small payload, so
+      // the driver's own settle would always miss it. Sample it on the way
+      // past instead, and let the driver assert on `window.__early`.
+      window.__early = [];
+      const sampleEarly = (at) => setTimeout(() => window.__early.push({
+        at,
+        loader: !!document.querySelector('.mm-stage'),
+        trains: document.querySelectorAll('.mm-train').length,
+        nodes: document.querySelectorAll('.react-flow__node').length,
+      }), at);
+
+      const boot = () => {
+        const script = document.createElement('script');
+        script.src = `plugin.js?${Date.now()}`;
+        script.onload = () => {
+          [0, 30, 300].forEach(sampleEarly);
+          setTimeout(window.__probe, 800);
+        };
+        document.body.appendChild(script);
+      };
+      if (LIVE) {
+        boot(); // No artifact yet — that is the whole point of this mode.
+      } else {
+        fetch(`payload.json?${Date.now()}`)
+          .then((r) => r.json())
+          .then((payload) => { window.__payload = payload; boot(); })
+          .catch((e) => { document.getElementById('probe').textContent = `payload failed: ${e}`; });
+      }
+    </script>
+  </body>
+</html>

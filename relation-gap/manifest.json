@@ -1,0 +1,410 @@
+{
+  "manifestVersion": 1,
+  "id": "org.promenade.relation-gap",
+  "name": "OCEL Relation Gaps",
+  "version": "0.3.0",
+  "license": "MIT",
+  "description": "Simulates and reconstructs missing event-object relations in an OCEL 2.0 log. \"Simulate relation gaps\" holds out a seeded test partition and drops a fraction of each test event's objects, producing a reproducible gapped log. Two reconstruction methods then compete on it: pairwise object co-occurrence, and a heterogeneous GraphSAGE network trained in the browser. Both score themselves against the original log with Hits@K and MRR and report into the same view. Ported from Áron Balázs Papp's \"Object-Centric Event Log Repair Through Graph Neural Networks\" (ELTE DS Lab 1).",
+  "pythonDeps": [
+    "pandas"
+  ],
+  "artifactTypes": [
+    {
+      "id": "RelationGapEvaluation",
+      "label": "Relation Gap Evaluation",
+      "shortLabel": "GAPS",
+      "family": "result"
+    },
+    {
+      "id": "RelationGapGraph",
+      "label": "Relation Gap Graph",
+      "shortLabel": "GRAPH",
+      "family": "result"
+    }
+  ],
+  "actions": [
+    {
+      "id": "org.promenade.relation-gap.simulate",
+      "label": "Simulate relation gaps",
+      "description": "Derives a gapped copy of an object-centric event log: a seeded share of the events becomes the test partition, and within each test event a fraction of the participating objects is removed. Every event keeps at least one object and every test event loses at least one, so the result is always a usable log with a known, recoverable set of holes. The same log, fraction and seed always produce the same gapped log.",
+      "runtime": "relational",
+      "queryFile": "ablate.sql",
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "gapped",
+          "type": "ObjectCentricEventLog"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "protocol": {
+            "type": "string",
+            "title": "Protocol",
+            "description": "Single target hides exactly one object per test event, whatever its size — the protocol the notebook evaluated under, and the one that weights every test event equally. Drop rate removes a share of each test event's objects, which is what §5.1 of the paper describes.",
+            "enum": [
+              "singleTarget",
+              "dropFraction"
+            ],
+            "default": "singleTarget",
+            "primary": true
+          },
+          "testFraction": {
+            "type": "number",
+            "title": "Test partition",
+            "description": "Share of events that lose objects. The rest keep every relation and are what a reconstruction method gets to learn from.",
+            "default": 0.3,
+            "minimum": 0.01,
+            "maximum": 0.9
+          },
+          "dropFraction": {
+            "type": "number",
+            "title": "Drop rate",
+            "description": "Share of a test event's objects to remove, under the Drop rate protocol. At least one object is always removed and at least one always survives, so an event with two objects loses exactly one at any setting. Ignored under Single target.",
+            "default": 0.3,
+            "minimum": 0.01,
+            "maximum": 0.9,
+            "showWhen": {
+              "param": "protocol",
+              "equals": "dropFraction"
+            }
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed",
+            "description": "Changes which events and objects are selected without changing how many. Re-running with the same seed reproduces the same gapped log exactly.",
+            "default": 42,
+            "minimum": 0,
+            "maximum": 1000000
+          }
+        },
+        "required": []
+      },
+      "apiVersion": "1"
+    },
+    {
+      "id": "org.promenade.relation-gap.reconstruct",
+      "label": "Reconstruct relation gaps",
+      "description": "Ranks candidate objects for every missing event-object relation, using pairwise co-occurrence probabilities estimated only from the relations the gapped log still has. Scores itself against the reference log with Hits@K, MRR and a per-object-type breakdown, and keeps a bounded walkthrough of individual predictions.",
+      "runtime": "pyodide",
+      "entry": "plugin.py",
+      "memory": "high",
+      "inputs": [
+        {
+          "name": "partial",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "a gapped Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        },
+        {
+          "name": "truth",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "the reference log it was derived from",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "evaluation",
+          "type": "RelationGapEvaluation"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "candidatePool": {
+            "type": "string",
+            "title": "Candidate pool",
+            "description": "Event objects ranks every object that takes part in some event, with candidates that never co-occurred tied at the bottom — the refactored reference implementation's universe, and what makes this arm comparable with the network. Co-occurring ranks only objects seen beside an observed one and reports the rest as outside the pool, which is §4.1's C(e) exactly. All adds objects the log never relates to any event.",
+            "enum": [
+              "eventObjects",
+              "cooccurring",
+              "all"
+            ],
+            "default": "eventObjects",
+            "primary": true
+          },
+          "fitOn": {
+            "type": "string",
+            "title": "Fit on",
+            "description": "Train events only counts co-occurrence over events with no held-out link, which is the partition the paper fits on and keeps the test events out of the model entirely. All observed also counts the surviving relations of gapped events — more evidence, but the test partition then informs the parameters it is scored against.",
+            "enum": [
+              "trainEvents",
+              "allObserved"
+            ],
+            "default": "trainEvents"
+          },
+          "topK": {
+            "type": "integer",
+            "title": "Predictions kept",
+            "description": "How many ranked candidates each gap keeps, and the K in precision, recall and F1. Hits@1, Hits@5, Hits@10 and MRR read the full ranking and do not depend on this.",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 50
+          },
+          "maxExamples": {
+            "type": "integer",
+            "title": "Walkthrough length",
+            "description": "How many individual gaps to keep as worked examples. A deterministic spread across the test partition, not the first N.",
+            "default": 25,
+            "minimum": 0,
+            "maximum": 200
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "id": "org.promenade.relation-gap.graph",
+      "label": "Build the relation gap learning graph",
+      "description": "Turns a gapped log and its reference into the integer-indexed heterogeneous graph the GraphSAGE kernel trains on: event and object nodes, the has / in / related relations between them, and the held-out links used only for scoring. An internal stage of \"Reconstruct relation gaps (GNN)\"; the network itself runs in WebAssembly and cannot reach the database, which is why the graph is assembled here.",
+      "internal": true,
+      "runtime": "pyodide",
+      "entry": "plugin.py",
+      "entryPoint": "graph",
+      "memory": "high",
+      "inputs": [
+        {
+          "name": "partial",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "a gapped Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        },
+        {
+          "name": "truth",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "the reference log it was derived from",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "graph",
+          "type": "RelationGapGraph"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "id": "org.promenade.relation-gap.reconstruct-gnn",
+      "label": "Reconstruct relation gaps (GNN)",
+      "description": "Trains a three-layer heterogeneous GraphSAGE network on the gapped log and ranks every object as a candidate for every hole. Message passing runs over the has / in / related channels of §4.2; the objective is the triplet margin of §5.3, with negatives drawn from the same object type as the positive. Training happens in the browser, in WebAssembly, and takes minutes rather than seconds.",
+      "runtime": "wasm",
+      "entry": "promenade_relation_gap.js",
+      "wasm": "promenade_relation_gap_bg.wasm",
+      "kernel": {
+        "class": "GapGnn",
+        "abi": "value-finalize/1"
+      },
+      "scans": "RelationGapGraph",
+      "scanAction": "org.promenade.relation-gap.graph",
+      "memory": "high",
+      "inputs": [
+        {
+          "name": "partial",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "a gapped Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        },
+        {
+          "name": "truth",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "the reference log it was derived from",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "evaluation",
+          "type": "RelationGapEvaluation"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "epochs": {
+            "type": "integer",
+            "title": "Training steps",
+            "description": "Each step recomputes every node's representation and takes one optimiser step on a sampled batch. The paper uses 400, which is this default and takes about two and a half minutes at width 64. More steps keep helping on this task well past 400.",
+            "default": 400,
+            "minimum": 10,
+            "maximum": 2000,
+            "primary": true
+          },
+          "hiddenDim": {
+            "type": "integer",
+            "title": "Embedding width",
+            "description": "Dimension of every hidden representation. The paper uses 128. Cost grows with the square, and on the P2P log the extra width buys less than spending the same time on more steps at width 64.",
+            "default": 64,
+            "minimum": 8,
+            "maximum": 256
+          },
+          "layers": {
+            "type": "integer",
+            "title": "Message-passing layers",
+            "description": "How many hops of the graph a node's representation can see. Three, as in the paper, lets an event reach objects two relations away.",
+            "default": 3,
+            "minimum": 1,
+            "maximum": 5
+          },
+          "batchEvents": {
+            "type": "integer",
+            "title": "Events per step",
+            "description": "Events sampled per optimiser step; every observed object of each becomes a positive example.",
+            "default": 1024,
+            "minimum": 16,
+            "maximum": 8192
+          },
+          "learningRate": {
+            "type": "number",
+            "title": "Learning rate",
+            "description": "Initial Adam step size, annealed to 1e-5 on a cosine schedule over the whole run.",
+            "default": 0.001,
+            "minimum": 1e-05,
+            "maximum": 0.1
+          },
+          "margin": {
+            "type": "number",
+            "title": "Triplet margin",
+            "description": "How much closer a true object must sit to its event than a false one before the loss is satisfied. Training has converged when the separation gap reaches this.",
+            "default": 0.5,
+            "minimum": 0.01,
+            "maximum": 2.0
+          },
+          "dropout": {
+            "type": "number",
+            "title": "Dropout",
+            "description": "Fraction of hidden units dropped after each layer but the last, during training only.",
+            "default": 0.3,
+            "minimum": 0.0,
+            "maximum": 0.9
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed",
+            "description": "Initial weights, batch sampling and dropout all derive from this. The same seed and settings reproduce the same network exactly.",
+            "default": 42,
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "topK": {
+            "type": "integer",
+            "title": "Predictions kept",
+            "description": "How many ranked candidates each gap keeps, and the K in precision, recall and F1. Hits@1, Hits@5, Hits@10 and MRR read the full ranking and do not depend on this.",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 50
+          },
+          "maxExamples": {
+            "type": "integer",
+            "title": "Walkthrough length",
+            "description": "How many individual gaps to keep as worked examples.",
+            "default": 25,
+            "minimum": 0,
+            "maximum": 200
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "org.promenade.relation-gap.view",
+      "label": "Relation gap evaluation",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "primary": true,
+      "appliesTo": [
+        "RelationGapEvaluation"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "title": "Walkthrough",
+            "enum": [
+              "all",
+              "correct",
+              "incorrect"
+            ],
+            "default": "all",
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog",
+    "RelationGapEvaluation",
+    "RelationGapGraph"
+  ],
+  "authors": [
+    {
+      "name": "Áron Balázs Papp",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering"
+    },
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "object-centric",
+    "ocel",
+    "log-repair",
+    "data-quality",
+    "link-prediction",
+    "co-occurrence",
+    "benchmark",
+    "graph-neural-network",
+    "graphsage",
+    "experimental"
+  ],
+  "readme": "README.md",
+  "author": "Áron Balázs Papp",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

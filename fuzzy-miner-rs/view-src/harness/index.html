@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Fuzzy Miner view harness</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; }
+      body { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      #root { position: absolute; inset: 0; }
+      #probe {
+        position: fixed; bottom: 0; right: 0; z-index: 99;
+        background: #111; color: #0f0; font: 11px ui-monospace, monospace;
+        padding: 4px 8px; white-space: pre;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="probe">booting…</div>
+    <script type="module">
+      // A throwaway harness: the same view bundle the sandboxed frame gets,
+      // driven from a real Fuzzy Model produced by the real wasm kernel — but
+      // in an ordinary page, where a test driver's synthetic input events
+      // actually reach the controls. The sandboxed frame is what ships; this
+      // exists only so the slider rail can be exercised at all.
+      import init, { FuzzyScan } from './promenade_fuzzy_miner.js';
+
+      // A deliberately spaghetti-ish synthetic log: a common backbone, a
+      // handful of rare side activities, and a rework loop.
+      function makeLog() {
+        let s = 12345;
+        const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 1e6) / 1e6; };
+        const names = [
+          'Register request', 'Examine thoroughly', 'Examine casually', 'Check ticket',
+          'Decide', 'Reinitiate request', 'Pay compensation', 'Reject request',
+          'Send confirmation', 'Archive file', 'Escalate to supervisor', 'Request extra info',
+          'Verify identity', 'Log complaint', 'Notify customer', 'Close case',
+        ];
+        const cases = [], acts = [], ts = [], res = [];
+        let t = Date.UTC(2026, 0, 1);
+        for (let c = 0; c < 900; c++) {
+          const trace = [0];
+          if (rnd() < 0.5) trace.push(1); else trace.push(2);
+          trace.push(3);
+          if (rnd() < 0.15) trace.push(11);
+          trace.push(4);
+          if (rnd() < 0.25) { trace.push(5); trace.push(3); trace.push(4); }
+          if (rnd() < 0.08) trace.push(10);
+          if (rnd() < 0.05) trace.push(12);
+          if (rnd() < 0.04) trace.push(13);
+          trace.push(rnd() < 0.6 ? 6 : 7);
+          if (rnd() < 0.1) trace.push(14);
+          trace.push(8, 9);
+          if (rnd() < 0.06) trace.push(15);
+          for (const a of trace) {
+            cases.push(c); acts.push(a); ts.push(t); res.push(Math.floor(rnd() * 6));
+            t += Math.floor(rnd() * 3_600_000) + 60_000;
+          }
+          t += 86_400_000;
+        }
+        return { names, cases, acts, ts, res };
+      }
+
+      const log = makeLog();
+      await init({ module_or_path: './promenade_fuzzy_miner_bg.wasm' });
+      const scan = new FuzzyScan(log.names.length);
+      scan.setActivityNames(log.names);
+      scan.setResourceNames(['Ann', 'Bob', 'Cara', 'Dan', 'Eve', 'Finn']);
+      scan.pushChunk(
+        Int32Array.from(log.cases), Int32Array.from(log.acts),
+        Float64Array.from(log.ts), Int32Array.from(log.res)
+      );
+      scan.finish();
+      // ?detail=1 mines with per-metric detail kept, so the Fuzzy metrics
+      // view's five raw-metric options (otherwise greyed out) can be tested.
+      const model = scan.finalize({
+        maximalDistance: 5, attenuation: 'nRoot', radical: 2.7,
+        frequencySignificanceUnary: 1, routingSignificanceUnary: 1,
+        frequencySignificanceBinary: 1, distanceSignificanceBinary: 1,
+        proximityCorrelation: 1, endpointCorrelation: 1, originatorCorrelation: 1,
+        includeMetricDetail: location.search.includes('detail'),
+      });
+
+      // A minimal stand-in for the host-injected `promenade` object. `setParams`
+      // records what the rail writes back, which is the half of the round trip
+      // the sandboxed frame would hand to the Inspector.
+      const theme = {
+        bg: '#ffffff', 'bg-soft': '#f6f7f9', border: '#dcdfe4',
+        text: '#1c2027', 'text-dim': '#697386', accent: '#2563eb',
+      };
+      const handlers = {};
+      window.__written = [];
+      window.promenade = {
+        // ?nomodel reproduces a reloaded session, where a derived artifact's
+        // result is no longer in memory and the frame is handed nothing.
+        artifact: () => ({ id: 'harness', name: 'Harness', type: 'FuzzyModel', tables: {},
+          value: location.search.includes('nomodel') ? null : model }),
+        theme: () => theme,
+        color: () => '#888',
+        select: (items) => { window.__selected = items; },
+        setParams: (patch) => { window.__written.push(patch); },
+        on: (event, fn) => { handlers[event] = fn; },
+        ready: () => { window.__ready = true; },
+      };
+      window.__dark = () => handlers.theme({ theme: {
+        bg: '#14171c', 'bg-soft': '#1c2027', border: '#333a44',
+        text: '#e6e9ee', 'text-dim': '#98a2b3', accent: '#5b8cff',
+      }, colors: {} });
+      // Fires a host-originated selection, the way the *other* view's node
+      // click would arrive here — for testing that a selection made in one
+      // view highlights in the other.
+      window.__select = (items) => handlers.selection?.({ items });
+      window.__setParams = (patch) => handlers.params?.(patch);
+      window.__stats = model.stats;
+      document.getElementById('probe').textContent =
+        `${model.activities.length} activities · ${model.stats.relations} relations`;
+      // ?view=matrix loads the Fuzzy metrics view instead of the graph.
+      const s = document.createElement('script');
+      s.src = new URLSearchParams(location.search).get('view') === 'matrix' ? './matrix.js' : './plugin.js';
+      document.body.appendChild(s);
+    </script>
+  </body>
+</html>

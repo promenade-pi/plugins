@@ -1,0 +1,337 @@
+/* Shared visual language for every Ocelot view — plain CSS, host theme
+   tokens only (see theme.ts), no framework. */
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text, #1c2027);
+  background: var(--bg, #fff);
+}
+#root { display: flex; flex-direction: column; overflow: hidden; }
+
+.oc-toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 12px; border-bottom: 1px solid var(--border, #e2ddd2);
+  flex: 0 0 auto;
+}
+.oc-toolbar-spacer { flex: 1 1 auto; }
+.oc-toolbar label {
+  display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-dim, #6b7280);
+  white-space: nowrap; cursor: pointer;
+}
+.oc-toolbar input[type="checkbox"] { accent-color: var(--accent, #2563eb); cursor: pointer; }
+
+.oc-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px;
+  border: 1px solid var(--border, #e2ddd2); border-radius: 5px; background: var(--bg-soft, #f7f4ee);
+  color: var(--text, #1c2027); font-size: 12px; cursor: pointer; white-space: nowrap;
+}
+.oc-btn:hover { background: var(--bg-sunken, #efeae0); }
+.oc-btn.active { background: var(--accent-soft, #dbeafe); border-color: var(--accent, #2563eb); color: var(--accent, #2563eb); }
+.oc-btn:disabled { opacity: .5; cursor: default; }
+.oc-btn-group { display: inline-flex; border-radius: 5px; overflow: hidden; border: 1px solid var(--border, #e2ddd2); }
+.oc-btn-group .oc-btn { border: 0; border-radius: 0; }
+.oc-btn-group .oc-btn + .oc-btn { border-left: 1px solid var(--border, #e2ddd2); }
+
+.oc-input {
+  padding: 5px 9px; border: 1px solid var(--border, #e2ddd2); border-radius: 5px;
+  background: var(--bg, #fff); color: var(--text, #1c2027); font-size: 12px; min-width: 0;
+}
+.oc-input:focus { outline: 2px solid var(--accent-soft, #dbeafe); border-color: var(--accent, #2563eb); }
+select.oc-input { cursor: pointer; }
+
+.oc-body { flex: 1 1 auto; overflow: auto; padding: 14px; }
+
+.oc-card {
+  border: 1px solid var(--border, #e2ddd2); border-radius: 10px; background: var(--bg-soft, #f7f4ee);
+  padding: 14px; margin-bottom: 12px;
+}
+.oc-card-title { font-weight: 650; font-size: 13px; margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+.oc-card-sub { font-size: 11.5px; color: var(--text-dim, #6b7280); margin: -6px 0 10px; }
+
+.oc-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.oc-stat { border: 1px solid var(--border, #e2ddd2); border-radius: 10px; background: var(--bg-soft, #f7f4ee); padding: 12px 14px; }
+.oc-stat-value { font-size: 26px; font-weight: 700; line-height: 1.1; }
+.oc-stat-label { font-size: 11px; color: var(--text-dim, #6b7280); margin-top: 3px; }
+
+.oc-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border, #e2ddd2); padding: 0 12px; flex: 0 0 auto; overflow-x: auto; }
+.oc-tab {
+  padding: 8px 12px; font-size: 12.5px; color: var(--text-dim, #6b7280); cursor: pointer;
+  border-bottom: 2px solid transparent; white-space: nowrap; background: none; border-top: 0; border-left: 0; border-right: 0;
+}
+.oc-tab:hover { color: var(--text, #1c2027); }
+.oc-tab.active { color: var(--accent, #2563eb); border-bottom-color: var(--accent, #2563eb); font-weight: 600; }
+
+.oc-table-wrap { border: 1px solid var(--border, #e2ddd2); border-radius: 8px; overflow: auto; background: var(--bg, #fff); }
+table.oc-table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.oc-table th {
+  position: sticky; top: 0; background: var(--bg-soft, #f7f4ee); text-align: left; font-weight: 600;
+  padding: 7px 10px; border-bottom: 1px solid var(--border, #e2ddd2); white-space: nowrap; color: var(--text-dim, #6b7280);
+}
+.oc-table td { padding: 6px 10px; border-bottom: 1px solid var(--border, #e2ddd2); vertical-align: top; }
+.oc-table tr:last-child td { border-bottom: 0; }
+.oc-table tr:hover td { background: var(--bg-sunken, #efeae0); }
+.oc-id-link { color: var(--accent, #2563eb); cursor: pointer; font-weight: 600; background: none; border: 0; padding: 0; font: inherit; }
+.oc-id-link:hover { text-decoration: underline; }
+
+.oc-pager { display: flex; align-items: center; gap: 8px; padding: 8px 4px 2px; font-size: 12px; color: var(--text-dim, #6b7280); }
+
+.oc-chip {
+  display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 99px;
+  background: var(--bg-sunken, #efeae0); border: 1px solid var(--border, #e2ddd2); font-size: 11px; white-space: nowrap;
+}
+.oc-chip-clickable { cursor: pointer; }
+.oc-chip-clickable:hover { border-color: var(--accent, #2563eb); color: var(--accent, #2563eb); }
+.oc-chip-cloud { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.oc-badge {
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; color: #fff; white-space: nowrap;
+}
+
+.oc-empty { color: var(--text-dim, #6b7280); font-size: 12px; padding: 20px; text-align: center; }
+.oc-loading { color: var(--text-dim, #6b7280); font-size: 12px; padding: 10px; }
+
+.oc-sidepanel {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 320px; max-width: 90vw;
+  background: var(--bg, #fff); border-left: 1px solid var(--border, #e2ddd2);
+  box-shadow: -8px 0 20px rgba(0,0,0,.08); display: flex; flex-direction: column;
+  transform: translateX(0); transition: transform .15s ease; z-index: 5;
+}
+.oc-sidepanel.closed { transform: translateX(100%); pointer-events: none; }
+.oc-sidepanel-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--border, #e2ddd2); flex: 0 0 auto; }
+.oc-sidepanel-body { flex: 1 1 auto; overflow: auto; padding: 12px; }
+.oc-close-btn { border: 0; background: none; cursor: pointer; color: var(--text-dim, #6b7280); font-size: 16px; line-height: 1; padding: 2px 6px; }
+.oc-close-btn:hover { color: var(--text, #1c2027); }
+
+.oc-breadcrumb { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-dim, #6b7280); flex-wrap: wrap; padding: 6px 12px 0; }
+.oc-breadcrumb button { border: 0; background: none; color: var(--accent, #2563eb); cursor: pointer; font: inherit; padding: 0; }
+.oc-breadcrumb button:hover { text-decoration: underline; }
+
+.oc-relative { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+
+.oc-kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.oc-kv-label { font-size: 10.5px; color: var(--text-dim, #6b7280); text-transform: uppercase; letter-spacing: .03em; }
+.oc-kv-value { font-size: 13px; font-weight: 600; margin-top: 1px; word-break: break-word; }
+
+.oc-timeline { position: relative; padding-left: 18px; }
+.oc-timeline::before { content: ''; position: absolute; left: 4px; top: 4px; bottom: 4px; width: 1px; background: var(--border, #e2ddd2); }
+.oc-timeline-entry { position: relative; padding-bottom: 14px; }
+.oc-timeline-dot { position: absolute; left: -18px; top: 3px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent, #2563eb); }
+.oc-timeline-entry.is-attr .oc-timeline-dot { background: var(--warn, #b45309); }
+
+.oc-scroll-y { overflow-y: auto; }
+
+/* --- Ported from app/src/styles.css's .trace-*/.pd-tabs/.chip/.grid rules,
+   so this sandboxed document (its own DOM, no access to the host
+   stylesheet) matches TraditionalEventLog's "Cases & variants" view
+   exactly. Same var(--...) tokens useHostTheme() already mirrors here. --- */
+
+/* Segmented control, not the ported flat bordered buttons — a bare pill
+   track with a floating active pill reads as "one choice among these", the
+   thing a tab pair actually is, instead of two independent buttons. Sized up
+   and given a visibly tinted track (not just a 1px border) so it doesn't
+   disappear at the top of the page — and the active pill takes the accent
+   color solid, so which tab is showing is legible at a glance, not just on
+   close inspection. */
+.pd-tabs { display: inline-flex; gap: 3px; padding: 4px; margin-bottom: 16px; background: color-mix(in srgb, var(--accent) 7%, var(--bg-soft)); border: 1px solid var(--border); border-radius: 10px; }
+.pd-tabs button { padding: 7px 20px; font-size: 13px; font-weight: 500; border: 0; border-radius: 8px; background: transparent; color: var(--text-dim); cursor: pointer; transition: background .15s ease, color .15s ease, box-shadow .15s ease; }
+.pd-tabs button:hover:not(.active) { color: var(--text); background: color-mix(in srgb, var(--text) 10%, transparent); }
+.pd-tabs button.active { background: var(--accent); color: #fff; font-weight: 600; box-shadow: 0 2px 5px color-mix(in srgb, var(--accent) 45%, transparent); }
+.pd-tabs button.active:hover { filter: brightness(1.05); }
+
+.chip { font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase; padding: 1px 5px; border-radius: 3px; white-space: nowrap; flex: 0 0 auto; background: var(--bg-sunken); border: 1px solid var(--border); color: var(--text-dim); }
+
+table.grid { border-collapse: collapse; width: 100%; font-size: 12px; }
+table.grid th, table.grid td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+table.grid th { color: var(--text-dim); font-weight: 600; font-size: 11px; }
+table.grid td.num, table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.clickable { cursor: pointer; }
+.err { color: var(--danger); font-size: 12px; }
+
+.trace-explorer { padding-top: 4px; overflow-x: hidden; overflow-y: auto; }
+.trace-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 13px; }
+.trace-header h2 { margin: 0; font-size: 16px; letter-spacing: -.01em; }
+.trace-header p { margin: 3px 0 0; font-size: 11.5px; color: var(--text-dim); }
+.trace-kpis { display: flex; gap: 14px; font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+.trace-kpis span { display: grid; text-align: right; }
+.trace-kpis b { color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; }
+.trace-tabs { margin-bottom: 10px; }
+
+/* Indefinite loading state — three of the swimlane's own chevron shapes
+   pulsing in a staggered left-to-right wave, so waiting on the extraction
+   (which has no known duration to progress-bar against) still reads as
+   "this view is doing something", not a frozen page. */
+.oc-loading { display: flex; align-items: center; gap: 14px; padding: 34px 4px; color: var(--text-dim); font-size: 12.5px; }
+/* Same gapped-chip look as the real .trace-step path chips (`.trace-path-row`'s
+   `gap`, not an overlapping chain) — floating notched chevrons, not a solid
+   connected arrow. */
+.oc-loading-chevrons { display: flex; gap: 3px; flex: 0 0 auto; }
+/* Progress + Cancel for the sliced extraction (see lib/pipeline.ts). The bar
+   counts real finished executions, so it never runs ahead of the work. */
+.oc-progress {
+  flex: 0 1 220px; height: 4px; border-radius: 3px; overflow: hidden;
+  background: var(--bg-sunken, #eef0f3);
+}
+.oc-progress-fill {
+  height: 100%; border-radius: 3px; background: var(--accent, #2563eb);
+  transition: width .15s linear;
+}
+.oc-loading-detail { flex: 0 0 auto; font-variant-numeric: tabular-nums; opacity: .85; }
+.oc-cancel {
+  flex: 0 0 auto; padding: 2px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border, #d8dce2); background: var(--bg-soft, #f6f7f9);
+  color: var(--text-dim, #6b7280); font-size: 11.5px; font-family: inherit;
+}
+.oc-cancel:hover { color: var(--danger, #dc2626); border-color: var(--danger, #dc2626); }
+.oc-loading-chevron {
+  --c: var(--accent);
+  width: 34px; height: 30px;
+  background: var(--c);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%, 8px 50%);
+  opacity: .25;
+  animation: oc-chevron-pulse 1.4s ease-in-out infinite;
+}
+.oc-loading-chevron:first-child { clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%); }
+@keyframes oc-chevron-pulse {
+  0%, 100% { opacity: .22; transform: scale(.92); }
+  40% { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oc-loading-chevron { animation: none; opacity: .85; }
+}
+.trace-layout { display: flex; flex-direction: column; gap: 10px; }
+.trace-main, .trace-legend { border: 1px solid var(--border); border-radius: 10px; background: var(--bg); min-width: 0; }
+.trace-toolbar { min-height: 43px; box-sizing: border-box; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--border); color: var(--text-dim); font-size: 11.5px; }
+.trace-toolbar label, .trace-coverage { display: flex; align-items: center; gap: 7px; color: var(--text-dim); }
+.trace-toolbar select { font-size: 11px; padding: 3px 22px 3px 6px; }
+.trace-table-wrap { overflow: visible; }
+.trace-table { min-width: 0; table-layout: auto; }
+.trace-variants-table { table-layout: fixed; }
+/* 8 columns here (TraceExplorer has 7 — no "Avg. objects"): chevron, #,
+   Variant path (the only unconstrained one — gets all remaining width),
+   Executions, Share, Avg. events, Avg. objects, Avg. duration. */
+.trace-variants-table th:nth-child(1) { width: 18px; }
+.trace-variants-table th:nth-child(2) { width: 32px; }
+.trace-variants-table th:nth-child(4) { width: 68px; }
+.trace-variants-table th:nth-child(5) { width: 56px; }
+.trace-variants-table th:nth-child(6) { width: 62px; }
+.trace-variants-table th:nth-child(7) { width: 62px; }
+.trace-variants-table th:nth-child(8) { width: 82px; }
+.trace-table th, .trace-table td { height: 34px; box-sizing: border-box; vertical-align: middle; }
+.trace-table tbody tr:hover:not(.trace-detail-row) { background: var(--bg-soft); }
+.trace-table th.num { text-align: right; }
+.trace-chevron-col { width: 19px; padding-right: 0 !important; }
+.trace-chevron { display: inline-block; font-size: 17px; line-height: 1; color: var(--text-dim); transform: rotate(0deg); transition: transform .12s ease; }
+.trace-chevron.open { transform: rotate(90deg); }
+.trace-rank { color: var(--text-dim); font-variant-numeric: tabular-nums; width: 20px; }
+.trace-sort { border: 0; padding: 0; background: transparent; color: var(--text-dim); font: inherit; font-weight: inherit; display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
+.trace-sort:hover, .trace-sort.active { color: var(--text); background: transparent; }
+.trace-sort span { color: var(--accent); font-size: 12px; }
+.trace-path { display: flex; align-items: center; min-width: 0; gap: 2px; row-gap: 4px; flex-wrap: wrap; white-space: normal; }
+/* Wraps ActivityPath + an optional "truncated" chip inside a plain <td> — the
+   flex layout must live on this inner div, not the <td> itself: a table cell
+   with `display: flex` stops participating in normal table row-height
+   layout in most engines, so a wrapped second line silently overlaps the
+   row below instead of growing the row. */
+.trace-path-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; row-gap: 4px; padding: 4px 0; }
+.trace-step { --activity-color: var(--accent); position: relative; max-width: min(104px, 100%); min-width: 38px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 0; border-radius: 0; padding: 4px 13px 4px 9px; font-size: 10.5px; line-height: 14px; color: #fff; background: var(--activity-color); clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%, 7px 50%); cursor: pointer; }
+.trace-step:first-child { clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%); padding-left: 8px; }
+.trace-step:hover { filter: brightness(1.08); background: var(--activity-color); }
+.trace-step.selected { outline: 2px solid var(--accent); outline-offset: -2px; filter: saturate(1.25) brightness(.94); }
+.trace-step-multi { text-shadow: 0 1px 2px rgba(0,0,0,.65), 0 0 4px rgba(0,0,0,.4); }
+.trace-more { margin-left: 3px; min-width: 21px; height: 20px; padding: 0 5px; border: 1px solid var(--border); border-radius: 10px; color: var(--text-dim); font-size: 10px; display: inline-flex; align-items: center; justify-content: center; }
+.trace-detail-row td { padding-top: 0; background: var(--bg-soft); }
+.trace-detail-sequence { font-size: 11px; color: var(--text-dim); line-height: 1.55; padding: 2px 0 7px; overflow-wrap: anywhere; }
+.trace-detail-label { margin-bottom: 4px; font-size: 10.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }
+.trace-case-chips { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 6px; }
+.trace-legend { order: -1; max-height: none; display: grid; grid-template-columns: auto minmax(150px, 230px) minmax(0, 1fr); align-items: center; overflow: visible; }
+.trace-legend-head { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 8px 11px; }
+.trace-legend-head h3 { margin: 0; font-size: 12.5px; }
+.trace-legend-head span { font-size: 10.5px; color: var(--text-dim); }
+.trace-legend > input { margin: 7px 8px; width: auto; min-width: 0; font-size: 11px; }
+.trace-legend-list { display: flex; flex-wrap: wrap; align-items: center; gap: 1px 4px; padding: 5px 7px 5px 0; max-height: 84px; overflow: auto; }
+.trace-legend-row { width: auto; max-width: 220px; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 6px; text-align: left; border: 0; padding: 4px 6px; background: transparent; font-size: 11px; cursor: pointer; }
+.trace-legend-row:hover, .trace-legend-row.selected { background: var(--accent-soft); }
+.trace-legend-row i { width: 9px; height: 9px; border-radius: 50%; }
+.trace-legend-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trace-legend-row b { font-size: 10px; color: var(--text-dim); font-weight: 500; font-variant-numeric: tabular-nums; }
+.trace-cases { max-width: none; }
+.trace-case-id { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Without a fixed layout the table (and everything below it, including an
+   expanded row's swimlane) grows to fit its widest cell instead of clipping
+   — the swimlane's own overflow:auto never gets a chance to kick in because
+   its containing <td> was never actually width-constrained. */
+.trace-cases-table { table-layout: fixed; }
+.trace-cases-table th:nth-child(1) { width: 18px; }
+.trace-cases-table th:nth-child(2) { width: 110px; }
+.trace-cases-table th:nth-child(3) { width: 170px; }
+.trace-cases-table th:nth-child(5) { width: 60px; }
+.trace-cases-table th:nth-child(6) { width: 130px; }
+.trace-cases-table th:nth-child(7) { width: 130px; }
+.trace-cases-table th:nth-child(8) { width: 80px; }
+.trace-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-height: 45px; padding: 7px 10px; box-sizing: border-box; color: var(--text-dim); font-size: 11px; border-top: 1px solid var(--border); }
+.trace-pagination label { display: flex; align-items: center; gap: 5px; margin-right: auto; }
+.trace-pagination select { font-size: 11px; padding: 3px 22px 3px 6px; }
+.trace-page-buttons { display: flex; align-items: center; gap: 2px; }
+.trace-page-buttons button { min-width: 25px; height: 24px; padding: 1px 5px; border: 0; background: transparent; color: var(--text-dim); cursor: pointer; }
+.trace-page-buttons button:hover:not(:disabled), .trace-page-buttons button.active { background: var(--accent-soft); color: var(--accent); }
+.trace-page-buttons button:disabled { opacity: .45; }
+.trace-empty { padding: 16px; color: var(--text-dim); }
+
+/* --- New: object-centric swimlane visualization (paper §V-B / Table I-III), not present in the traditional view. --- */
+.swim-wrap { padding: 4px 0 10px; }
+/* Two independent panes rather than one grid with a sticky first column — a
+   grid item's containing block for `position: sticky` is its own grid area
+   (120px here), not the whole grid, so a sticky label built that way stops
+   sticking the moment the scroll passes its own column's width. A plain
+   non-scrolling label pane next to an independently-scrolling cell pane has
+   no such ceiling: the label never scrolls, so it never needs to "catch up"
+   to anything. */
+.swim-body { display: flex; align-items: flex-start; }
+/* `position: relative; z-index: 1` lifts the label pane into its own
+   stacking context above `.swim-cells` — without it, each row's box-shadow
+   (which, being a shadow, paints past its own box into the space
+   `.swim-cells` occupies) is immediately covered by `.swim-cells`, which
+   comes after it in DOM order and paints on top at the same default
+   stacking level. No shadow ever became visible at all, not even patchily. */
+.swim-labels { flex: 0 0 120px; display: flex; flex-direction: column; gap: 2px; background: var(--bg); position: relative; z-index: 1; }
+.swim-cells { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
+.swim-grid { display: grid; gap: 2px 1px; align-items: stretch; }
+/* Each lane is a two-tone color band — a pale wash of its object type's
+   color behind the whole row (label included), solid chevrons on top —
+   matching the paper's Table I ("each type has a specific base color... a
+   particular shade") and ocpa/OCπ's own rendered example. */
+.swim-lane-label {
+  display: flex; align-items: baseline; gap: 5px; padding: 4px 8px; font-size: 10.5px; line-height: 1.3;
+  border-radius: 3px 0 0 3px; min-height: 26px; box-sizing: border-box;
+  box-shadow: 6px 0 10px -6px transparent; transition: box-shadow .18s ease;
+}
+/* `.scrolled` (toggled from JS on the cell pane's onScroll) fades in a
+   drop-shadow off each row's trailing edge — the usual "there's more,
+   you've scrolled" cue, since the labels themselves stay visible either way.
+   Per-row, not once on the `.swim-labels` wrapper: each row paints its own
+   opaque background (the pale type wash), so a wrapper-level shadow was
+   only ever visible bleeding through the 2px gaps *between* rows — a dashed
+   line of shadow slivers, not the solid edge this is meant to read as. */
+.swim-body.scrolled .swim-lane-label { box-shadow: 6px 0 10px -6px color-mix(in srgb, var(--text) 45%, transparent); }
+.swim-lane-type { color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; font-size: 9px; flex: 0 0 auto; }
+.swim-lane-id { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.swim-cell { min-height: 26px; display: flex; align-items: center; border-radius: 3px; }
+.swim-cell:last-child { border-radius: 3px 3px 3px 0; }
+.swim-cell .trace-step { max-width: none; width: 100%; border: 0; }
+
+@media (max-width: 900px) {
+  .trace-legend { grid-template-columns: auto minmax(130px, 190px) minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .trace-header { display: block; }
+  .trace-kpis { margin-top: 10px; }
+  .trace-pagination { flex-wrap: wrap; justify-content: space-between; }
+  .trace-pagination label { margin-right: 0; }
+  .trace-legend { grid-template-columns: 1fr; }
+  .trace-legend-head { padding-bottom: 2px; }
+  .trace-legend > input { margin-top: 2px; }
+  .trace-legend-list { padding-left: 7px; }
+}

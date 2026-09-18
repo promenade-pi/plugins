@@ -1,0 +1,215 @@
+{
+  "manifestVersion": 1,
+  "id": "org.promenade.resource-behavior",
+  "name": "Resource Behavior",
+  "version": "0.1.0",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "How each person in a log actually works: how much they do, how fast, how specialised, how often they batch or juggle several things at once, and whether they slow down when busy.",
+  "runtime": "wasm",
+  "entry": "promenade_resource_behavior.js",
+  "wasm": "promenade_resource_behavior_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "ResourceProfiles",
+      "label": "Resource Profiles",
+      "shortLabel": "PROF",
+      "family": "result"
+    }
+  ],
+  "actions": [
+    {
+      "id": "org.promenade.resource-behavior.profile",
+      "label": "Resource Behavior",
+      "description": "Profiles every person in the log: volume, spread of work, collaboration, batching, and — where the log records start and complete separately — service time, waiting time, utilisation, multitasking, and the correlation between how busy someone was and how long their work then took.",
+      "agent": {
+        "whenToUse": "Questions about individuals rather than about relations: who carries the volume, who specialises, who is juggling several things at once, who slows down under load. Complements the Social Network plugin, which answers who works with whom.",
+        "notFor": "A log with no resource attribute or no timestamps — it is not offered there. On a log without lifecycle values every duration metric is reported as unavailable rather than approximated from the gap between events, which would conflate queueing with working.",
+        "examples": [
+          "Profile the resources in this log",
+          "Do people here slow down when they have more work in progress?",
+          "bucket week to see the workload timeline by week instead of by day",
+          "minEvents 50 to drop the occasional visitors"
+        ]
+      },
+      "memory": "high",
+      "kernel": {
+        "class": "ResourceBehaviorScan",
+        "abi": "scan-finalize/1",
+        "scan": {
+          "order": "timestamp",
+          "resource": true,
+          "classifier": "activityLifecycle"
+        }
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log",
+          "requires": ["event.resource", "event.timestamp"]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "profiles",
+          "type": "ResourceProfiles"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "title": "Timeline bucket",
+            "description": "Width of one column in the workload timeline. Widened automatically when the log spans more columns than are worth drawing; the effective width is reported.",
+            "enum": ["hour", "day", "week", "month"],
+            "enumLabels": ["Hour", "Day", "Week", "Month"],
+            "default": "day",
+            "primary": true,
+            "cheap": true
+          },
+          "batchWindowMins": {
+            "type": "number",
+            "title": "Batch window (minutes)",
+            "description": "How close together two identical activities must be to read as one sitting. Batching is a statement about this window, not an absolute property — a shorter one finds fewer, larger runs.",
+            "default": 5,
+            "minimum": 0,
+            "maximum": 480,
+            "multipleOf": 0.5,
+            "cheap": true
+          },
+          "minEvents": {
+            "type": "integer",
+            "title": "Minimum events per person",
+            "description": "Drops people below this. A resource seen twice has no meaningful rate, utilisation or correlation, and their rows crowd out the ones that do.",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 10000,
+            "cheap": true
+          },
+          "maxResources": {
+            "type": "integer",
+            "title": "Resource limit",
+            "description": "Keeps this many people, most active first. The rest are dropped and counted.",
+            "default": 200,
+            "minimum": 1,
+            "maximum": 4096,
+            "cheap": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Bounds the activity dictionary the scan builds. This log is classified by activity *and* lifecycle phase, so the dictionary is up to three times the number of activities — set it high enough for that.",
+            "default": 3000,
+            "minimum": 3,
+            "maximum": 5000
+          }
+        },
+        "required": ["bucket"]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "org.promenade.resource-behavior.profiles",
+      "label": "Resource profiles",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": ["ResourceProfiles"],
+      "primary": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "sortBy": {
+            "type": "string",
+            "title": "Sort by",
+            "enum": ["events", "utilisation", "multitasking", "service", "batching", "spread", "collaborators", "name"],
+            "enumLabels": [
+              "Events", "Utilisation", "Multitasking", "Mean service time",
+              "Batching", "Spread of work", "Collaborators", "Name"
+            ],
+            "default": "events",
+            "cheap": true
+          },
+          "showScatter": {
+            "type": "boolean",
+            "title": "Show workload vs speed",
+            "description": "Every work item plotted as how many the person had in progress when it started against how long it then took.",
+            "default": true,
+            "cheap": true
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "id": "org.promenade.resource-behavior.timeline",
+      "label": "Workload timeline",
+      "kind": "sandboxed",
+      "entry": "view/timeline.js",
+      "appliesTo": ["ResourceProfiles"],
+      "params": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "string",
+            "title": "Order people by",
+            "enum": ["events", "first", "name"],
+            "enumLabels": ["Events", "When they first appear", "Name"],
+            "default": "events",
+            "cheap": true
+          },
+          "scale": {
+            "type": "string",
+            "title": "Colour scale",
+            "description": "Linear reads absolute volume; square-root keeps a quiet person visible beside a very busy one.",
+            "enum": ["sqrt", "linear"],
+            "enumLabels": ["Square root", "Linear"],
+            "default": "sqrt",
+            "cheap": true
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "recommends": [
+    {
+      "id": "org.promenade.social-network",
+      "reason": "the other half of the organisational perspective — who works with whom, rather than how each person works"
+    }
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "Pika, A., Leyer, M., Wynn, M.T., Fidge, C.J., ter Hofstede, A.H.M., van der Aalst, W.M.P. (2017). Mining Resource Profiles from Event Logs. ACM Transactions on Management Information Systems, 8(1), 1-30.",
+    "doi": "10.1145/3041218",
+    "bibtex": "@article{pika2017profiles,\n  title   = {Mining Resource Profiles from Event Logs},\n  author  = {Pika, Anastasiia and Leyer, Michael and Wynn, Moe T. and Fidge, Colin J. and ter Hofstede, Arthur H. M. and van der Aalst, Wil M. P.},\n  journal = {ACM Transactions on Management Information Systems},\n  volume  = {8}, number = {1}, pages = {1--30}, year = {2017},\n  doi     = {10.1145/3041218}\n}"
+  },
+  "homepage": "https://github.com/promenade-lab/resource-behavior",
+  "repository": "https://github.com/promenade-lab/resource-behavior",
+  "keywords": [
+    "organizational-mining",
+    "resource",
+    "workload",
+    "utilisation",
+    "multitasking",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/metrics.md",
+      "title": "Metrics"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

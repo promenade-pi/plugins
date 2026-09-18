@@ -1,0 +1,208 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.alignment",
+  "name": "Conformance Checking",
+  "version": "0.3.0",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Replays a log against a Petri net two ways: alignments (the cheapest explanation of every trace variant, with fitness and escaping-edges precision) and token-based replay (a linear walk that attributes missing and remaining tokens to individual places).",
+  "runtime": "wasm",
+  "entry": "promenade_alignment.js",
+  "wasm": "promenade_alignment_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "AlignmentSet",
+      "label": "Alignment Set",
+      "shortLabel": "ALIGN"
+    },
+    {
+      "id": "ReplayDiagnostics",
+      "label": "Replay Diagnostics",
+      "shortLabel": "REPLAY",
+      "family": "result"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.alignment.check",
+      "label": "Conformance checking (alignments)",
+      "description": "For every distinct trace variant, the cheapest alignment of sync, log and model moves against the net, plus the fitness and precision derived from it.",
+      "agent": {
+        "whenToUse": "The exact answer to \"does this model explain this log\", and the only one of the two that can say what the *cheapest* explanation of a deviating trace was. Reports precision as well as fitness.",
+        "notFor": "A large model with heavy concurrency — the search is bounded and reports such variants as unreachable rather than hanging. Use token-based replay there, and for a place-level diagnosis of where the log breaks.",
+        "examples": [
+          "Check this inductive-miner net against the log it was mined from",
+          "variantLimit 200 for a quick read on the most frequent behaviour"
+        ]
+      },
+      "memory": "high",
+      "kernel": {
+        "class": "AlignmentScan",
+        "abi": "scan-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        },
+        {
+          "name": "model",
+          "type": "AcceptingPetriNet",
+          "required": true,
+          "label": "an Accepting Petri Net"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "alignments",
+          "type": "AlignmentSet"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "variantLimit": {
+            "type": "integer",
+            "title": "Variant limit",
+            "description": "Aligns at most this many distinct trace variants, most frequent first.",
+            "default": 1000,
+            "minimum": 1,
+            "maximum": 100000,
+            "primary": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Unlike a discovery miner, truncating this silently drops an activity from every trace that has it, producing a wrong alignment rather than an approximate one — set high enough to cover the log's real activity count.",
+            "default": 1000,
+            "minimum": 2,
+            "maximum": 5000
+          }
+        },
+        "required": [
+          "variantLimit"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.alignment.token-replay",
+      "label": "Conformance checking (token replay)",
+      "description": "Fires every trace through the net, inventing a token wherever a transition is not enabled and counting what is left over at the end. Reports token-based fitness and, per place, where the log and the model disagreed.",
+      "agent": {
+        "whenToUse": "A fast fitness figure on a model alignments cannot handle, and the only action that localises a deviation to a *place* in the net rather than to a position in a move sequence. Linear in the log: no state-space cap, nothing that can fail to terminate.",
+        "notFor": "The authoritative fitness number. It never backtracks, so on a net with duplicate labels or heavy concurrency it can report a better figure than the true optimum; use alignments when the number itself is the claim. It also computes no precision.",
+        "examples": [
+          "Replay the log on this net and tell me which places accumulate missing tokens",
+          "Which activities could only fire by inventing a token?"
+        ]
+      },
+      "memory": "medium",
+      "kernel": {
+        "class": "TokenReplayScan",
+        "abi": "scan-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        },
+        {
+          "name": "model",
+          "type": "AcceptingPetriNet",
+          "required": true,
+          "label": "an Accepting Petri Net"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "diagnostics",
+          "type": "ReplayDiagnostics"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "variantLimit": {
+            "type": "integer",
+            "title": "Variant limit",
+            "description": "Replays at most this many distinct trace variants, most frequent first. Higher than the alignment default because replay is linear, not a search.",
+            "default": 5000,
+            "minimum": 1,
+            "maximum": 200000,
+            "primary": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Truncating this drops an activity from every trace that has it, which silently improves the fitness instead of approximating it — set high enough to cover the log's real activity count.",
+            "default": 1000,
+            "minimum": 2,
+            "maximum": 5000
+          }
+        },
+        "required": [
+          "variantLimit"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.alignment.explorer",
+      "label": "Alignment explorer",
+      "kind": "native",
+      "native": "core.alignmentView",
+      "appliesTo": [
+        "AlignmentSet"
+      ]
+    },
+    {
+      "id": "run.promenade.alignment.diagnostics",
+      "label": "Replay diagnostics",
+      "kind": "native",
+      "native": "core.replayDiagnosticsView",
+      "appliesTo": [
+        "ReplayDiagnostics"
+      ]
+    }
+  ],
+  "kernel": {
+    "class": "AlignmentScan",
+    "abi": "scan-finalize/1"
+  },
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "van der Aalst, W.M.P., Adriansyah, A., van Dongen, B.F. (2012). Replaying History on Process Models for Conformance Checking and Performance Analysis. WIREs Data Mining and Knowledge Discovery, 2(2), 182-192.",
+    "doi": "10.1002/widm.1045",
+    "bibtex": "@article{vanderaalst2012replaying,\n  title   = {Replaying History on Process Models for Conformance Checking and Performance Analysis},\n  author  = {van der Aalst, Wil M. P. and Adriansyah, Arya and van Dongen, Boudewijn F.},\n  journal = {WIREs Data Mining and Knowledge Discovery},\n  volume  = {2}, number = {2}, pages = {182--192}, year = {2012},\n  doi     = {10.1002/widm.1045}\n}"
+  },
+  "homepage": "https://github.com/promenade-lab/alignment",
+  "repository": "https://github.com/promenade-lab/alignment",
+  "keywords": [
+    "conformance",
+    "alignment",
+    "token-replay",
+    "fitness",
+    "petri-net",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

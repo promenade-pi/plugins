@@ -1,0 +1,218 @@
+/* Injected as a <style> tag at runtime: the frame's CSP allows inline styles
+   and no external loads, so a separate stylesheet has no way in. Colours are
+   the host's injected theme tokens throughout — a plugin picks none of them. */
+
+.raw {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  color: var(--text);
+  background: var(--bg);
+  font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---- left: the file tree ---- */
+
+.raw-side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 0 0 auto;
+  border-right: 1px solid var(--border);
+  background: var(--bg-soft);
+}
+.raw-side-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.raw-side-head b { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+.raw-side-head span { color: var(--text-dim); font-size: 10.5px; margin-left: auto; }
+.raw-tree { flex: 1; overflow: auto; padding: 4px 0 10px; }
+
+.raw-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 3px 10px 3px 0;
+  cursor: pointer;
+  position: relative;
+}
+.raw-row:hover { background: var(--bg-sunken); }
+.raw-row.sel { background: var(--accent-soft); }
+/* Selection as an accent bar, not fill alone — the same reading the host's
+   own artifact tree uses, and it survives next to the indent guides. */
+.raw-row.sel::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--accent);
+}
+.raw-row.dir { cursor: pointer; }
+.raw-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.raw-size {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  flex: 0 0 auto;
+}
+.raw-caret {
+  width: 10px; flex: 0 0 auto; color: var(--text-dim);
+  font-size: 9px; line-height: 1; text-align: center;
+}
+
+/* File-kind glyph: shape and colour carry the type, so a Parquet file is
+   distinguishable from JSON without reading the extension. */
+.raw-glyph {
+  flex: 0 0 auto;
+  width: 13px; height: 13px;
+  border-radius: 2px;
+  display: grid; place-items: center;
+  font-size: 8px; font-weight: 700;
+  color: var(--bg);
+  letter-spacing: -0.03em;
+}
+.raw-glyph.parquet { background: var(--accent); }
+.raw-glyph.json { background: var(--warn); }
+.raw-glyph.other { background: var(--text-dim); }
+.raw-glyph.folder { background: none; color: var(--text-dim); font-size: 11px; }
+.raw-logical { color: var(--text-dim); font-size: 10px; }
+
+/* Drag handle between the panes. */
+.raw-grip {
+  flex: 0 0 auto;
+  width: 5px;
+  margin-left: -3px;
+  cursor: col-resize;
+  background: none;
+  z-index: 2;
+}
+.raw-grip:hover { background: var(--accent-soft); }
+
+/* ---- right: the file's contents ---- */
+
+.raw-main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+.raw-head {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.raw-path { font: 11.5px ui-monospace, Menlo, monospace; font-weight: 600; }
+.raw-chip {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: var(--text-dim);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.raw-spacer { flex: 1; }
+
+.raw-btn {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 7px;
+  cursor: pointer;
+}
+.raw-btn:hover:not(:disabled) { border-color: var(--accent); }
+.raw-btn:disabled { opacity: 0.4; cursor: default; }
+.raw-btn.on { border-color: var(--accent); color: var(--accent); }
+
+.raw-cols {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-soft);
+  padding: 7px 10px;
+  display: flex; flex-wrap: wrap; gap: 4px 12px;
+  max-height: 30%; overflow: auto;
+}
+.raw-col-toggle {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; cursor: pointer;
+}
+.raw-col-toggle code { color: var(--text-dim); font-size: 10px; }
+
+/* The table itself: one scroll container, sticky header, so a wide Parquet
+   file scrolls inside the panel instead of pushing the panel around. */
+.raw-scroll { flex: 1; overflow: auto; min-height: 0; }
+.raw-table { border-collapse: separate; border-spacing: 0; font-size: 11.5px; }
+.raw-table th, .raw-table td {
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  max-width: 460px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.raw-table thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--bg-soft);
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+.raw-table thead th .t { display: block; color: var(--text-dim); font-weight: 400; font-size: 10px; }
+.raw-table td.num, .raw-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.raw-table td.gutter, .raw-table th.gutter {
+  position: sticky; left: 0; z-index: 1;
+  background: var(--bg);
+  color: var(--text-dim);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  border-right: 1px solid var(--border);
+  font-size: 10.5px;
+}
+.raw-table thead th.gutter { z-index: 2; background: var(--bg-soft); }
+.raw-table tbody tr:hover td { background: var(--bg-sunken); }
+.raw-table tbody tr:hover td.gutter { background: var(--bg-sunken); }
+.raw-null { color: var(--text-dim); font-style: italic; }
+
+.raw-foot {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-soft);
+  font-size: 11px;
+}
+.raw-foot input {
+  width: 74px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  padding: 2px 5px;
+}
+.raw-foot select {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  padding: 2px 4px;
+}
+.raw-range { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+.raw-text {
+  flex: 1; overflow: auto; margin: 0;
+  padding: 10px 12px;
+  font: 11.5px/1.5 ui-monospace, Menlo, monospace;
+  white-space: pre;
+}
+.raw-note { padding: 12px; color: var(--text-dim); }
+.raw-err { padding: 12px; color: var(--danger); font: 11px ui-monospace, Menlo, monospace; white-space: pre-wrap; }
+.raw-busy { padding: 12px; color: var(--text-dim); }

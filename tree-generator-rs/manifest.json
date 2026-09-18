@@ -1,0 +1,181 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.tree-generator",
+  "name": "Process Tree Generator",
+  "version": "0.1.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Draws a random process tree from a parameterised distribution, after Jouck and Depaire's PTandLogGenerator: how many activities, how much concurrency, how many loops, whether there are silent steps or duplicate labels. It is what an evaluation needs that real logs cannot give — a model whose properties were chosen rather than observed, and known exactly before any log exists. Play the tree out and the whole ground truth of the resulting log is known too.",
+  "runtime": "wasm",
+  "entry": "promenade_tree_generator.js",
+  "wasm": "promenade_tree_generator_bg.wasm",
+  "actions": [
+    {
+      "id": "run.promenade.tree-generator.generate",
+      "label": "Generate a process tree…",
+      "description": "Draws one tree: its size from a triangular distribution over the range you give, its operators from the weights you give, top down. The result is an ordinary Process Tree artifact — the tree view draws it, the BPMN conversion converts it, and every model-side plugin reads it, exactly as if the Inductive Miner had discovered it.",
+      "memory": "low",
+      "standalone": true,
+      "agent": {
+        "whenToUse": "To obtain a model with known, controlled properties: benchmarking a miner, building a test fixture, or producing a demo model without a log. Combine with Play out for a log whose generating model is known exactly.",
+        "notFor": "Modelling a real process. The activities are called a, b, c and the structure is drawn at random; nothing about it is meant to resemble anything.",
+        "examples": [
+          "the defaults draw a 10–30 activity tree with all four operators and some silent steps",
+          "parallel 1 with the other weights 0 for a model that is nothing but concurrency",
+          "seed 1, 2, 3… for a family of models from one distribution"
+        ]
+      },
+      "kernel": {
+        "class": "GenerateTree",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "tree",
+          "type": "ProcessTree"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "activityMode": {
+            "type": "integer",
+            "title": "Activities (most likely)",
+            "description": "The peak of the triangular distribution the tree's size is drawn from. The size is the number of activity leaves; duplicated labels make the number of distinct activities smaller than it.",
+            "default": 20,
+            "minimum": 1,
+            "maximum": 500,
+            "primary": true
+          },
+          "activityMin": {
+            "type": "integer",
+            "title": "Activities (fewest)",
+            "description": "The smallest size the draw can produce.",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 500
+          },
+          "activityMax": {
+            "type": "integer",
+            "title": "Activities (most)",
+            "description": "The largest size the draw can produce. Split discovery and state-space checks both grow fast in the activity count, so a model meant for those is worth keeping small.",
+            "default": 30,
+            "minimum": 1,
+            "maximum": 500
+          },
+          "sequence": {
+            "type": "number",
+            "title": "Sequence weight (→)",
+            "description": "Relative weight of the sequence operator. The five weights are normalised, so they need not add up to anything in particular; what matters is their ratio.",
+            "default": 0.25,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05
+          },
+          "choice": {
+            "type": "number",
+            "title": "Exclusive choice weight (×)",
+            "description": "Relative weight of the exclusive choice. Choices are what make a log have more than one variant.",
+            "default": 0.25,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05
+          },
+          "parallel": {
+            "type": "number",
+            "title": "Parallel weight (∧)",
+            "description": "Relative weight of the parallel operator. Concurrency multiplies a model's state space and the interleavings a log shows, so it is the parameter that makes a benchmark hard.",
+            "default": 0.25,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05
+          },
+          "loop": {
+            "type": "number",
+            "title": "Loop weight (↻)",
+            "description": "Relative weight of the loop. A loop makes the model's language infinite, which is exactly what a discovery algorithm has to generalise to from a finite log.",
+            "default": 0.25,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05
+          },
+          "inclusive": {
+            "type": "number",
+            "title": "Inclusive choice weight (∨)",
+            "description": "Relative weight of the inclusive choice — any non-empty subset of the branches. No discovery algorithm here produces one and it has no plain Petri net translation, so it is off by default; turn it on to exercise the BPMN side, which does have inclusive gateways.",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05
+          },
+          "silent": {
+            "type": "number",
+            "title": "Silent steps (τ)",
+            "description": "How often a choice gets a silent branch — making the rest of it optional — or a loop's repeat part is silent, making the body simply repeat. Those are the two places a silent step changes what a model does; anywhere else it would be a node no log could ever show.",
+            "default": 0.2,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05
+          },
+          "duplicate": {
+            "type": "number",
+            "title": "Duplicate labels",
+            "description": "How often a leaf reuses a label already in the tree instead of a fresh one. Two leaves with the same name are the classic blind spot of discovery: most algorithms cannot tell them apart and will fold them into one.",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed",
+            "description": "The same seed and settings give exactly the same tree, so a generated benchmark can be cited and repeated. Change it for another draw from the same distribution.",
+            "default": 42,
+            "minimum": 0,
+            "maximum": 4294967295
+          }
+        },
+        "required": [
+          "activityMode",
+          "activityMin",
+          "activityMax",
+          "seed"
+        ]
+      }
+    }
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "Jouck, T. and Depaire, B. (2019). Generating artificial data for empirical analysis of control-flow discovery algorithms: a process tree and log generator. Business & Information Systems Engineering 61(6), 695-712. This plugin implements the tree half of that generator, from the paper's description; the log half is the Play-out plugin.",
+    "doi": "10.1007/s12599-018-0541-5",
+    "bibtex": "@article{jouck2019generating,\n  title   = {Generating Artificial Data for Empirical Analysis of Control-flow Discovery Algorithms},\n  author  = {Jouck, Toon and Depaire, Benoit},\n  journal = {Business \\& Information Systems Engineering},\n  volume  = {61}, number = {6}, pages = {695--712}, year = {2019},\n  doi     = {10.1007/s12599-018-0541-5}\n}"
+  },
+  "keywords": [
+    "generator",
+    "process-tree",
+    "benchmarking",
+    "ground-truth",
+    "synthetic",
+    "ptandloggenerator",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

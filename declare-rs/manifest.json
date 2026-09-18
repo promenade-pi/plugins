@@ -1,0 +1,313 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.declare",
+  "name": "DECLARE",
+  "version": "0.1.1",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Declarative process mining: instead of a model you can walk through, a list of rules the process never broke — “every claim is eventually assessed”, “payment only happens after approval”, “these two never both occur”. This is the paradigm for flexible processes, where the imperative model is a spaghetti diagram that allows almost everything and explains nothing. Discovers a DECLARE model from a log, and checks any DECLARE model against any log, naming the cases that broke each rule.",
+  "runtime": "wasm",
+  "entry": "promenade_declare.js",
+  "wasm": "promenade_declare_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "DeclareModel",
+      "label": "DECLARE Model",
+      "shortLabel": "DECLARE",
+      "family": "model"
+    },
+    {
+      "id": "DeclareDiagnostics",
+      "label": "DECLARE Conformance",
+      "shortLabel": "RULES",
+      "family": "result"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.declare.discover",
+      "label": "Discover DECLARE model",
+      "description": "Measures every candidate rule over the log's activities — eighteen templates over every ordered pair — and keeps the ones that hold often enough and were put to the test often enough. Support is how often a rule held; confidence is how often it held when it could have been broken, so a rule about something that almost never happens cannot coast on an empty truth. Redundant rules are removed: if the log obeys “A is always immediately followed by B” there is no point also reporting “A is eventually followed by B”.",
+      "memory": "medium",
+      "agent": {
+        "whenToUse": "For a flexible process whose imperative model is unreadable, or to state what a log always does without committing to an order of work.",
+        "notFor": "Replaying or simulating. A DECLARE model constrains behaviour rather than generating it, so there is no play-out and no token game.",
+        "examples": [
+          "minSupport 1 for the rules that were never once broken",
+          "minConfidence 0.9 with minSupport 0.5 for rules that hold whenever they apply, even if they rarely apply",
+          "negative false to leave out the “these two never both happen” family"
+        ]
+      },
+      "kernel": {
+        "class": "DeclareScan",
+        "abi": "scan-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "DeclareModel"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "minSupport": {
+            "type": "number",
+            "title": "Minimum support",
+            "description": "Keep a rule only if it holds in at least this share of cases. 1 means it was never broken.",
+            "default": 0.9,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "primary": true,
+            "cheap": true
+          },
+          "minConfidence": {
+            "type": "number",
+            "title": "Minimum confidence",
+            "description": "Keep a rule only if it held in at least this share of the cases that could have broken it. This is what separates a rule from a truth nobody ever tested: a rule that is never activated scores zero here however high its support.",
+            "default": 0.9,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "prune": {
+            "type": "boolean",
+            "title": "Remove redundant rules",
+            "description": "Drop a rule that a stronger rule already implies — “A is eventually followed by B” when the log says “A is immediately followed by B”. What is dropped is counted, never silently lost.",
+            "default": true,
+            "cheap": true
+          },
+          "unary": {
+            "type": "boolean",
+            "title": "Rules about single activities",
+            "description": "Existence, absence, exactly once, starts with, ends with.",
+            "default": true,
+            "cheap": true
+          },
+          "relations": {
+            "type": "boolean",
+            "title": "Ordering rules",
+            "description": "Responded existence, response, precedence and succession — “eventually”, at any distance.",
+            "default": true,
+            "cheap": true
+          },
+          "alternating": {
+            "type": "boolean",
+            "title": "Alternating rules",
+            "description": "The same orderings, but with nothing of the same kind in between: A, B, A, B rather than A, A, B.",
+            "default": true,
+            "cheap": true
+          },
+          "chain": {
+            "type": "boolean",
+            "title": "Immediate rules",
+            "description": "Chain response, precedence and succession — one activity directly after the other, with nothing at all in between.",
+            "default": true,
+            "cheap": true
+          },
+          "negative": {
+            "type": "boolean",
+            "title": "Rules about what never happens",
+            "description": "Not co-existence, not succession, not chain succession. These are often the most interesting rules a log has, and the ones an imperative model cannot state at all.",
+            "default": true,
+            "cheap": true
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Most rules to keep",
+            "description": "A cap on the model's size, applied after ranking by confidence. A model larger than this is a list, not a description; what was cut is reported.",
+            "default": 500,
+            "minimum": 10,
+            "maximum": 20000,
+            "cheap": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps only the most frequent activities. Every ordered pair is a candidate rule, so the work grows with the square of this — and so does the model.",
+            "default": 24,
+            "minimum": 2,
+            "maximum": 128
+          }
+        },
+        "required": [
+          "minSupport",
+          "minConfidence"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.declare.check",
+      "label": "Check DECLARE rules",
+      "description": "Checks a DECLARE model against a log, case by case: which rules were broken, how often, and by which cases. A declarative model makes this simpler than alignment does — there is no search and no cost, only a rule and the cases that broke it. Rules the log never activates are reported separately, because a model that says nothing about a log is a different finding from a model it obeys.",
+      "memory": "medium",
+      "agent": {
+        "whenToUse": "To test a model discovered from one log (or written by hand) against another period, another site, or the cases you suspect.",
+        "notFor": "Measuring fitness of an imperative model — use conformance checking (alignments) for a Petri net."
+      },
+      "kernel": {
+        "class": "DeclareCheck",
+        "abi": "scan-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        },
+        {
+          "name": "model",
+          "type": "DeclareModel",
+          "required": true,
+          "label": "a DECLARE Model"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "diagnostics",
+          "type": "DeclareDiagnostics"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "maxCases": {
+            "type": "integer",
+            "title": "Cases to list",
+            "description": "How many violating cases to name, worst first. The counts are over the whole log whatever this is set to; this only bounds the list.",
+            "default": 200,
+            "minimum": 10,
+            "maximum": 5000,
+            "cheap": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps only the most frequent activities. A rule about an activity outside the limit is reported as naming an activity this log does not record, rather than silently passing.",
+            "default": 64,
+            "minimum": 2,
+            "maximum": 128
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.declare.rules",
+      "label": "Rules",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "DeclareModel"
+      ],
+      "primary": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "sort": {
+            "type": "string",
+            "title": "Order",
+            "enum": [
+              "confidence",
+              "support",
+              "activations",
+              "template",
+              "activity"
+            ],
+            "enumLabels": [
+              "By confidence",
+              "By support",
+              "By how often they apply",
+              "By rule type",
+              "By activity"
+            ],
+            "default": "confidence",
+            "cheap": true
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "id": "run.promenade.declare.violations",
+      "label": "Violations",
+      "kind": "sandboxed",
+      "entry": "view/violations.js",
+      "appliesTo": [
+        "DeclareDiagnostics"
+      ],
+      "primary": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "show": {
+            "type": "string",
+            "title": "Show",
+            "enum": [
+              "broken",
+              "all"
+            ],
+            "enumLabels": [
+              "Broken rules only",
+              "Every rule"
+            ],
+            "default": "broken",
+            "cheap": true
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "consumes": [
+    "TraditionalEventLog",
+    "DeclareModel",
+    "DeclareDiagnostics"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "Pesic, M., Schonenberg, H. and van der Aalst, W.M.P. (2007). DECLARE: Full Support for Loosely-Structured Processes. EDOC 2007, 287-298. Discovery follows Maggi, F.M., Bose, R.P.J.C. and van der Aalst, W.M.P. (2012), Efficient Discovery of Understandable Declarative Process Models from Event Logs, CAiSE 2012, LNCS 7328, 270-285.",
+    "doi": "10.1109/EDOC.2007.14",
+    "bibtex": "@inproceedings{pesic2007declare,\n  title     = {DECLARE: Full Support for Loosely-Structured Processes},\n  author    = {Pesic, Maja and Schonenberg, Helen and van der Aalst, Wil M. P.},\n  booktitle = {EDOC 2007},\n  pages     = {287--298}, year = {2007},\n  doi       = {10.1109/EDOC.2007.14}\n}"
+  },
+  "keywords": [
+    "declare",
+    "declarative",
+    "constraints",
+    "conformance",
+    "ltl",
+    "flexible-processes",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

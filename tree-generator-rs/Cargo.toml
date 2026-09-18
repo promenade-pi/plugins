@@ -1,0 +1,25 @@
+[workspace]
+members = ["crates/tree-gen-core"]
+resolver = "2"
+
+[package]
+name = "promenade-tree-generator"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Random process trees for benchmarking, after Jouck & Depaire's PTandLogGenerator"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+tree-gen-core = { path = "crates/tree-gen-core" }
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

@@ -1,0 +1,287 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.inductive-visual-miner",
+  "name": "Inductive Visual Miner",
+  "version": "0.3.12",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Runs browser-native, exact alignment replay between a traditional event log and an accepting Petri net, then animates token flow in React Flow. It uses Rust/WASM and caches one Dijkstra alignment per distinct trace variant — no Python runtime is loaded.",
+  "runtime": "wasm",
+  "entry": "ivm_alignment.js",
+  "wasm": "ivm_alignment_bg.wasm",
+  "kernel": {
+    "class": "IvmAlignmentScan",
+    "abi": "scan-finalize/1",
+    "scan": {
+      "order": "log"
+    }
+  },
+  "artifactTypes": [
+    {
+      "id": "VisualMinerReplay",
+      "label": "Inductive Visual Miner replay",
+      "shortLabel": "IVM",
+      "family": "model"
+    },
+    {
+      "id": "DirectlyFollowsVisualMinerReplay",
+      "label": "Directly-Follows Visual Miner replay",
+      "shortLabel": "DFVM",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.inductive-visual-miner.replay",
+      "label": "Inductive Visual Miner",
+      "memory": "high",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        },
+        {
+          "name": "model",
+          "type": "AcceptingPetriNet",
+          "required": true,
+          "label": "an Accepting Petri Net"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "replay",
+          "type": "VisualMinerReplay"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "caseLimit": {
+            "type": "integer",
+            "title": "Case limit",
+            "description": "Safety cap for the alignment run. The animation samples this complete, aligned replay; increase it for aggregate statistics, not for more on-screen particles.",
+            "default": 400,
+            "minimum": 10,
+            "maximum": 5000,
+            "multipleOf": 10,
+            "primary": true
+          },
+          "variantLimit": {
+            "type": "integer",
+            "title": "Variant limit",
+            "description": "Aligns this many distinct trace variants, most frequent first. Every occurrence of an aligned variant is then replayed up to the case limit.",
+            "default": 1000,
+            "minimum": 10,
+            "maximum": 100000,
+            "multipleOf": 10
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps the most frequent activities for browser-native alignment. Set it at least as high as the log's real activity count to avoid dropping a label.",
+            "default": 1000,
+            "minimum": 2,
+            "maximum": 5000
+          }
+        },
+        "required": [
+          "caseLimit",
+          "variantLimit"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.inductive-visual-miner.dfg-replay",
+      "label": "Mine with Directly-Follows Visual Miner",
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "replay",
+          "type": "DirectlyFollowsVisualMinerReplay"
+        }
+      ],
+      "kernel": {
+        "class": "DfgVisualScan",
+        "abi": "scan-finalize/1",
+        "scan": {
+          "order": "timestampNullsLast"
+        }
+      },
+      "params": {
+        "type": "object",
+        "properties": {
+          "caseLimit": {
+            "type": "integer",
+            "title": "Case limit",
+            "description": "Maximum number of cases represented by moving tokens. The DFG itself is always calculated from the complete selected log.",
+            "default": 400,
+            "minimum": 10,
+            "maximum": 5000,
+            "multipleOf": 10,
+            "primary": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Safety limit for the browser-native visualization; the most frequent activities are retained.",
+            "default": 1000,
+            "minimum": 2,
+            "maximum": 5000
+          }
+        },
+        "required": [
+          "caseLimit"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.inductive-visual-miner.lifecycle-replay",
+      "label": "Inductive Visual Miner (lifecycle)",
+      "memory": "high",
+      "modelTransform": "lifecycle",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log",
+          "requires": [
+            "event.lifecycle"
+          ]
+        },
+        {
+          "name": "model",
+          "type": "AcceptingPetriNet",
+          "required": true,
+          "label": "an Accepting Petri Net"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "replay",
+          "type": "VisualMinerReplay"
+        }
+      ],
+      "kernel": {
+        "class": "IvmAlignmentScan",
+        "abi": "scan-finalize/1",
+        "scan": {
+          "order": "log",
+          "classifier": "activityLifecycle"
+        }
+      },
+      "params": {
+        "type": "object",
+        "properties": {
+          "caseLimit": {
+            "type": "integer",
+            "title": "Case limit",
+            "description": "Safety cap for the lifecycle-aware alignment replay.",
+            "default": 400,
+            "minimum": 10,
+            "maximum": 5000,
+            "multipleOf": 10,
+            "primary": true
+          },
+          "variantLimit": {
+            "type": "integer",
+            "title": "Variant limit",
+            "description": "Aligns this many distinct lifecycle trace variants, most frequent first.",
+            "default": 1000,
+            "minimum": 10,
+            "maximum": 100000,
+            "multipleOf": 10
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Lifecycle activity limit",
+            "description": "Maximum number of activity/lifecycle combinations retained by the browser-native alignment.",
+            "default": 1000,
+            "minimum": 2,
+            "maximum": 5000
+          }
+        },
+        "required": [
+          "caseLimit",
+          "variantLimit"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.inductive-visual-miner.view",
+      "label": "Inductive Visual Miner",
+      "kind": "sandboxed",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "VisualMinerReplay"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "showTokenCounts": {
+            "type": "boolean",
+            "title": "Show token counts at places",
+            "description": "Labels each place with how many tokens are currently resting there during playback, instead of drawing nothing between a token's arrival and its next move.",
+            "default": false,
+            "cheap": true
+          }
+        }
+      }
+    },
+    {
+      "id": "run.promenade.inductive-visual-miner.dfg-view",
+      "label": "Directly-Follows Visual Miner",
+      "kind": "sandboxed",
+      "entry": "dfg-plugin.js",
+      "appliesTo": [
+        "DirectlyFollowsVisualMinerReplay"
+      ]
+    }
+  ],
+  "consumes": [
+    "TraditionalEventLog",
+    "AcceptingPetriNet",
+    "VisualMinerReplay",
+    "DirectlyFollowsVisualMinerReplay"
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "repository": "https://github.com/promworkbench/InductiveVisualMiner",
+  "citation": {
+    "text": "S. J. J. Leemans, D. Fahland and W. M. P. van der Aalst. Exploring Processes Using Inductive Visual Miner. PETRI NETS 2014 Demonstration Track.",
+    "url": "https://www.leemans.ch/publications/ivm%20ProM%206.9.pdf"
+  },
+  "keywords": [
+    "inductive visual miner",
+    "alignment",
+    "lifecycle",
+    "DFG",
+    "token replay",
+    "Petri net",
+    "Rust",
+    "WASM",
+    "animation"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

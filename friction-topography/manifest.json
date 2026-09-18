@@ -1,0 +1,229 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.friction-topography",
+  "name": "Process Friction Topography",
+  "version": "0.1.10",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "A performance overlay that makes waiting time part of the model's geometry. The discovered process keeps an ordinary layered ground plan; elevation is a friction statistic interpolated into a surface, so valleys are the routine high-volume path, ridges are where cases queue, and a whole slow region of the process reads as a plateau rather than as several red nodes. Clicking a peak opens the variants, cases, resources and wait distribution behind it. Rendered with three.js WebGPURenderer, falling back to WebGL 2.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.friction-topography.view",
+      "label": "Process Friction Topography",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "frictionMetric": {
+            "type": "string",
+            "title": "Elevation",
+            "description": "Which per-activity statistic becomes terrain height. Waiting time is measured as the gap since the case's (or object's) previous event; an occurrence that starts a case has no measurable wait and is excluded rather than counted as zero. Switching this never re-queries the log and never moves a station: the mountains rise and fall while the map stays put, so two metrics are directly comparable.",
+            "enum": [
+              "medianWait",
+              "p90Wait",
+              "meanWait",
+              "totalWait",
+              "reworkRate"
+            ],
+            "default": "medianWait",
+            "primary": true
+          },
+          "activities": {
+            "type": "array",
+            "title": "Activities",
+            "description": "Empty means all activities. A selection restricts which steps the terrain is built from, without changing how waiting time is measured.",
+            "default": [],
+            "optionsFrom": {
+              "sql": "SELECT activity AS value, COUNT(*) AS n FROM {event} WHERE activity IS NOT NULL GROUP BY 1 ORDER BY n DESC, activity",
+              "countField": "n",
+              "colorDomain": "activity"
+            }
+          },
+          "objectTypes": {
+            "type": "array",
+            "title": "Object types",
+            "description": "Empty means all object types. On an OCEL the lifecycles whose gaps define waiting time are the objects', so this chooses whose waiting is on the map.",
+            "default": [],
+            "onlyFor": [
+              "ObjectCentricEventLog"
+            ],
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} WHERE object_type IS NOT NULL GROUP BY 1 ORDER BY n DESC, object_type",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "timeStart": {
+            "type": "string",
+            "title": "Time range",
+            "description": "Restricts the terrain to events inside a calendar window, which is how a before-and-after comparison of a process change is made.",
+            "default": "",
+            "control": "timeRange",
+            "rangeEnd": "timeEnd"
+          },
+          "timeEnd": {
+            "type": "string",
+            "title": "Until time",
+            "default": "",
+            "control": "timeRangeEnd"
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activities on the map",
+            "description": "The most frequent activities, at most this many. A map with sixty stations on it is a map nobody reads.",
+            "default": 16,
+            "minimum": 4,
+            "maximum": 40
+          },
+          "edgeCoverage": {
+            "type": "integer",
+            "title": "Flow coverage",
+            "description": "Keeps the strongest flows until they account for this share of everything that actually happened, rather than cutting at an arbitrary count. Whatever the cut, every activity on the map keeps its strongest incoming and outgoing flow, so no summit is left unreachable.",
+            "default": 92,
+            "minimum": 40,
+            "maximum": 100
+          },
+          "elevationCurve": {
+            "type": "string",
+            "title": "Elevation curve",
+            "description": "`linear` reads literally: twice the wait, twice the height. `compressed` raises height to a fractional power, the vertical exaggeration a relief map applies, so that one rare three-day exception path does not press the entire routine process into a flat plain. Ordering is identical either way, and the elevation axis is graduated through the same curve, so its numbers stay correct - only their spacing changes.",
+            "enum": [
+              "compressed",
+              "linear"
+            ],
+            "default": "compressed"
+          },
+          "verticalScale": {
+            "type": "number",
+            "title": "Relief",
+            "description": "Vertical exaggeration. Also on the panel's own toolbar, where it is next to the terrain it stretches.",
+            "default": 1,
+            "minimum": 0.2,
+            "maximum": 2.6,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "terrainDetail": {
+            "type": "string",
+            "title": "Terrain detail",
+            "description": "Grid resolution of the surface and its texture. `high` sharpens the contour lines on a large display; `low` is for a slow machine.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "default": "medium"
+          },
+          "palette": {
+            "type": "string",
+            "title": "Palette",
+            "description": "`auto` follows Promenade's own appearance setting. `topographic` is the dark hypsometric tint: near-black plains, blue lowlands, a warm ridge. `relief` is a light-background scheme, also the one to pick for a printed figure.",
+        "enum": [
+          "auto",
+          "topographic",
+          "relief"
+        ],
+        "default": "auto"
+          },
+          "viewMode": {
+            "type": "string",
+            "title": "Camera",
+            "description": "`top` looks straight down and turns the terrain into a plan-view heat map of the same data.",
+            "enum": [
+              "3d",
+              "top"
+            ],
+            "default": "3d",
+            "cheap": true
+          },
+          "showContours": {
+            "type": "boolean",
+            "title": "Contour lines",
+            "description": "Isolines of the elevation metric, at the same values as the axis graduations.",
+            "default": true,
+            "cheap": true
+          },
+          "showStreams": {
+            "type": "boolean",
+            "title": "Flow ribbons",
+            "default": true,
+            "cheap": true
+          },
+          "showLabels": {
+            "type": "boolean",
+            "title": "Station labels",
+            "default": true,
+            "cheap": true
+          },
+          "animateFlow": {
+            "type": "boolean",
+            "title": "Flow motion",
+            "description": "Marks traveling along each flow, slower where the hand-off is slower.",
+            "default": true,
+            "cheap": true
+          },
+          "renderer": {
+            "type": "string",
+            "title": "Graphics backend",
+            "description": "`auto` lets three.js target WebGPU where the browser offers it and fall back to WebGL 2 where it does not. `webgl2` pins the fallback, for a machine whose driver claims WebGPU support and then renders incorrectly.",
+            "enum": [
+              "auto",
+              "webgl2"
+            ],
+            "default": "auto"
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "TraditionalEventLog",
+    "ObjectCentricEventLog"
+  ],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "performance",
+    "bottleneck",
+    "waiting-time",
+    "queue",
+    "rework",
+    "3d",
+    "webgpu",
+    "terrain",
+    "visual-analytics",
+    "view"
+  ],
+  "homepage": "https://github.com/promenade-lab/friction-topography",
+  "docs": [
+    {
+      "path": "README.md",
+      "title": "Read me"
+    },
+    {
+      "path": "docs/reading-the-map.md",
+      "title": "Reading the map"
+    },
+    {
+      "path": "docs/how-the-terrain-is-built.md",
+      "title": "How the terrain is built"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

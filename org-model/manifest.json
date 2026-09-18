@@ -1,0 +1,182 @@
+{
+  "manifestVersion": 1,
+  "id": "org.promenade.org-model",
+  "name": "Organizational Model Mining",
+  "version": "0.1.0",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Groups the people in a social network into roles, and names each one by the work its members do. Hierarchical clustering over the network's own weights, with the cut as a parameter rather than a guess.",
+  "runtime": "wasm",
+  "entry": "promenade_org_model.js",
+  "wasm": "promenade_org_model_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "OrganizationalModel",
+      "label": "Organizational Model",
+      "shortLabel": "ORG",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "org.promenade.org-model.discover",
+      "label": "Organizational Model",
+      "description": "Clusters a social network into groups of people and describes each group by its members' activities. A similar-task network yields roles; a handover or working-together network yields organisational units.",
+      "agent": {
+        "whenToUse": "Turning a social network into an organisational structure: who belongs with whom, and what that group does. Run Social Network's similar-task action first for roles, or any of its other relations for organisational units.",
+        "notFor": "A log — it takes a SocialNetwork, not an event log, because the network already states which relation is being clustered and the answer means different things for different ones. It also assigns every person to exactly one group; it cannot express someone holding two roles.",
+        "examples": [
+          "Cluster this similar-task network into 5 roles",
+          "method hierarchicalThreshold with threshold 0.3 to let the data decide how many roles there are",
+          "linkage complete to judge a role by its least similar pair",
+          "Raise roleCount until the mean silhouette stops improving"
+        ]
+      },
+      "memory": "low",
+      "kernel": {
+        "class": "OrgModelKernel",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "network",
+          "type": "SocialNetwork",
+          "required": true,
+          "label": "a Social Network"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "OrganizationalModel"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "description": "Hierarchical clustering merges the two closest people repeatedly, so every number of groups comes from one computation and the cut is a choice rather than a re-run. Connected components answers a different question exactly: everyone linked above the threshold, transitively.",
+            "enum": ["hierarchicalCount", "hierarchicalThreshold", "components"],
+            "enumLabels": [
+              "Hierarchical — fixed number of groups",
+              "Hierarchical — similarity threshold",
+              "Connected components"
+            ],
+            "default": "hierarchicalCount",
+            "primary": true
+          },
+          "roleCount": {
+            "type": "integer",
+            "title": "Number of groups",
+            "description": "Where to cut the dendrogram. Raise it until the mean silhouette stops improving — the view reports that number for exactly this purpose.",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 200,
+            "cheap": true,
+            "showWhen": {
+              "param": "method",
+              "equals": "hierarchicalCount"
+            }
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Similarity threshold",
+            "description": "How alike two people must be to end up together, on a 0–1 scale the network's own weights are mapped onto. Lets the data decide how many groups there are instead of fixing the count.",
+            "default": 0.5,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "cheap": true,
+            "showWhen": {
+              "param": "method",
+              "oneOf": ["hierarchicalThreshold", "components"]
+            }
+          },
+          "linkage": {
+            "type": "string",
+            "title": "Linkage",
+            "description": "How the distance between two groups is measured. Average is the balanced default; complete judges a group by its least similar pair and so resists loose ones; single joins on the strongest single link and readily chains people into one long group.",
+            "enum": ["average", "complete", "single"],
+            "enumLabels": ["Average", "Complete (furthest pair)", "Single (nearest pair)"],
+            "default": "average",
+            "showWhen": {
+              "param": "method",
+              "oneOf": ["hierarchicalCount", "hierarchicalThreshold"]
+            }
+          }
+        },
+        "required": ["method"]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "org.promenade.org-model.view",
+      "label": "Organizational model",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": ["OrganizationalModel"],
+      "primary": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "show": {
+            "type": "string",
+            "title": "Show",
+            "enum": ["both", "groups", "dendrogram"],
+            "enumLabels": ["Groups and dendrogram", "Groups only", "Dendrogram only"],
+            "default": "both",
+            "cheap": true
+          },
+          "sortBy": {
+            "type": "string",
+            "title": "Order groups by",
+            "enum": ["size", "events", "cohesion", "name"],
+            "enumLabels": ["Size", "Events", "Cohesion", "Name"],
+            "default": "size",
+            "cheap": true
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "recommends": [
+    {
+      "id": "org.promenade.social-network",
+      "reason": "produces the SocialNetwork this clusters — run its similar-task action for roles, or handover/working-together for organisational units"
+    }
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "Song, M., van der Aalst, W.M.P. (2008). Towards Comprehensive Support for Organizational Mining. Decision Support Systems, 46(1), 300-317.",
+    "doi": "10.1016/j.dss.2008.07.002",
+    "bibtex": "@article{song2008organizational,\n  title   = {Towards Comprehensive Support for Organizational Mining},\n  author  = {Song, Minseok and van der Aalst, Wil M. P.},\n  journal = {Decision Support Systems},\n  volume  = {46}, number = {1}, pages = {300--317}, year = {2008},\n  doi     = {10.1016/j.dss.2008.07.002}\n}"
+  },
+  "homepage": "https://github.com/promenade-lab/org-model",
+  "repository": "https://github.com/promenade-lab/org-model",
+  "keywords": [
+    "organizational-mining",
+    "role-discovery",
+    "clustering",
+    "resource",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/clustering.md",
+      "title": "Clustering"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+[package]
+name = "lpm-core"
+version = "0.1.0"
+edition = "2021"
+description = "Local Process Model discovery: process-tree search + alignment-based scoring. No wasm, no browser."
+license = "MIT"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]

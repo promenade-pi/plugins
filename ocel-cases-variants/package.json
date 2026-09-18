@@ -1,0 +1,19 @@
+{
+  "name": "ocel-cases-variants",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "node build.js",
+    "check": "node check.js"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
+  }
+}

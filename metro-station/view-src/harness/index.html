@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Metro Station view harness</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #f6f6f3; }
+      body { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      #root { position: absolute; inset: 0; }
+      #probe {
+        position: fixed; bottom: 0; left: 0; z-index: 99;
+        background: #111; color: #0f0; font: 10px ui-monospace, monospace;
+        padding: 3px 7px; white-space: pre; max-width: 60vw;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="probe">booting…</div>
+    <script type="module">
+      /**
+       * A throwaway harness for the sandboxed view.
+       *
+       * The shipped view runs in an opaque-origin iframe under
+       * `sandbox="allow-scripts"`, where a test driver's synthetic pointer
+       * events never arrive and `read_page` sees nothing at all. This page
+       * loads the *same* bundle in an ordinary same-origin document, backed by
+       * a payload the real wasm kernel produced (`harness/fixture.mjs`), so
+       * what is on screen is what ships.
+       *
+       * Staged into `app/__ms-harness/` by `npm run harness`, removed by
+       * `npm run harness:rm`. Dev-only; never leave it staged in a build.
+       */
+      window.__thrown = [];
+      window.addEventListener('error', (e) => window.__thrown.push(String(e.error?.stack ?? e.message)));
+      window.addEventListener('unhandledrejection', (e) => window.__thrown.push(String(e.reason?.stack ?? e.reason)));
+
+      const probe = document.getElementById('probe');
+      const fixture = await (await fetch('./fixture.json')).json();
+
+      const PALETTE = {
+        Order: '#2f6fd0', Item: '#e07b28', Invoice: '#d5348c', Shipment: '#2f9e52',
+      };
+      const FALLBACK = ['#2f6fd0', '#e07b28', '#d5348c', '#2f9e52', '#8b5cf6', '#0ea5a4'];
+      let next = 0;
+      const assigned = new Map();
+
+      const url = new URL(location.href);
+      const overrides = {};
+      for (const [key, value] of url.searchParams) {
+        overrides[key] = value === 'true' ? true : value === 'false' ? false
+          : Number.isFinite(Number(value)) && value !== '' ? Number(value) : value;
+      }
+
+      const listeners = {};
+      window.promenade = {
+        artifact: () => ({
+          id: 'a1', name: 'Object-Centric Station Map', type: 'OCStationMap',
+          tables: {}, value: fixture,
+        }),
+        theme: () => ({ mode: 'light' }),
+        color: (domain, value) => {
+          if (PALETTE[value]) return PALETTE[value];
+          if (!assigned.has(value)) assigned.set(value, FALLBACK[next++ % FALLBACK.length]);
+          return assigned.get(value);
+        },
+        select: (items) => { window.__selection = items; },
+        setParams: (patch) => { window.__params = { ...(window.__params ?? {}), ...patch }; },
+        sql: async () => ({ numRows: 0, columns: {} }),
+        cachedState: async () => null,
+        setCachedState: () => {},
+        on: (event, fn) => { (listeners[event] ??= []).push(fn); },
+        ready: () => {
+          window.__ready = true;
+          if (Object.keys(overrides).length) {
+            for (const fn of listeners.params ?? []) fn(overrides);
+          }
+        },
+      };
+
+      // The view is loaded as a classic script, exactly as the frame loads it.
+      const script = document.createElement('script');
+      script.src = `/__ms-harness/plugin.js?t=${Date.now()}`;
+      document.head.appendChild(script);
+
+      let frames = 0;
+      const tick = () => { frames++; requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+      setInterval(() => {
+        const canvas = document.querySelector('canvas');
+        const shown = [...document.querySelectorAll('.ms-label')]
+          .filter((n) => n.style.opacity === '1').length;
+        probe.textContent =
+          `ready=${!!window.__ready} frames=${frames} canvas=${canvas ? `${canvas.width}x${canvas.height}` : 'none'} ` +
+          `labels=${shown}/${document.querySelectorAll('.ms-label').length} ` +
+          `platforms=${fixture.platforms.length} shafts=${fixture.shafts.length} ` +
+          `errors=${window.__thrown.length}${window.__thrown.length ? `\n${window.__thrown[0].slice(0, 400)}` : ''}`;
+      }, 400);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "*.test.ts",
+    "geometry.ts",
+    "types.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

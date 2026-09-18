@@ -1,0 +1,299 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.log-skeleton",
+  "name": "Log Skeleton",
+  "version": "0.1.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "The facts a log never broke: which activities always follow which, which never occur together, which occur equally often, and how many times each may occur in a case. A log skeleton is not a model you walk through — it is a classifier, and it won the Process Discovery Contest by deciding whether a trace belongs rather than by drawing a diagram. Discover one from a log, then check any other log against it.",
+  "runtime": "wasm",
+  "entry": "promenade_log_skeleton.js",
+  "wasm": "promenade_log_skeleton_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "LogSkeleton",
+      "label": "Log Skeleton",
+      "shortLabel": "SKEL",
+      "family": "model"
+    },
+    {
+      "id": "LogSkeletonDiagnostics",
+      "label": "Skeleton Classification",
+      "shortLabel": "FITS?",
+      "family": "result"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.log-skeleton.discover",
+      "label": "Discover log skeleton",
+      "description": "Records every fact that held in the log: equivalence (two activities occur equally often), always-before and always-after (ordering at any distance), never-together, directly-follows, and the set of occurrence counts each activity was seen with. With no noise allowed, a fact is kept only if not one case broke it — which is what makes the result usable as a classifier rather than a summary.",
+      "memory": "medium",
+      "agent": {
+        "whenToUse": "To state what a log always does without committing to an order of work, and to get a model that can judge whether a new case belongs.",
+        "notFor": "Drawing a process. There is nothing to walk through and no notion of a path; use a miner for that.",
+        "examples": [
+          "the defaults (no noise) for the paper's own setting",
+          "noise 0.05 on a real-life log, where a handful of cases break everything"
+        ]
+      },
+      "kernel": {
+        "class": "SkeletonScan",
+        "abi": "scan-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "skeleton",
+          "type": "LogSkeleton"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "noise": {
+            "type": "number",
+            "title": "Noise allowed",
+            "description": "The share of cases that may break a fact and still leave it in the skeleton. 0 is the paper's own setting: a fact held by every single case. Raising it lets a rule through that a handful of exceptional cases break — and drops the rarest occurrence counts, so one freak case cannot widen the model.",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 0.5,
+            "multipleOf": 0.01,
+            "primary": true,
+            "cheap": true
+          },
+          "counts": {
+            "type": "boolean",
+            "title": "How often each activity happens",
+            "description": "Records the set of occurrence counts each activity was seen with. This is the part with the most classifying power and the part a reader can check against what they know about the process.",
+            "default": true,
+            "cheap": true
+          },
+          "equivalence": {
+            "type": "boolean",
+            "title": "Equivalence",
+            "description": "Two activities that always occur the same number of times. Nothing in DECLARE or in an imperative model says this.",
+            "default": true,
+            "cheap": true
+          },
+          "alwaysBefore": {
+            "type": "boolean",
+            "title": "Always before",
+            "description": "One activity never happens before another has happened.",
+            "default": true,
+            "cheap": true
+          },
+          "alwaysAfter": {
+            "type": "boolean",
+            "title": "Always after",
+            "description": "One activity is always followed by another later in the case.",
+            "default": true,
+            "cheap": true
+          },
+          "neverTogether": {
+            "type": "boolean",
+            "title": "Never together",
+            "description": "Two activities that never both occur in one case.",
+            "default": true,
+            "cheap": true
+          },
+          "directlyFollows": {
+            "type": "boolean",
+            "title": "Directly follows",
+            "description": "One activity is always immediately followed by another, with nothing in between.",
+            "default": true,
+            "cheap": true
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Most facts to keep",
+            "description": "A cap on the skeleton's size. What was cut is reported rather than silently dropped.",
+            "default": 2000,
+            "minimum": 10,
+            "maximum": 50000,
+            "cheap": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps only the most frequent activities. Every ordered pair is a candidate for five relations, so the work grows with the square of this.",
+            "default": 32,
+            "minimum": 2,
+            "maximum": 128
+          }
+        },
+        "required": [
+          "noise"
+        ]
+      }
+    },
+    {
+      "id": "run.promenade.log-skeleton.check",
+      "label": "Classify against a skeleton",
+      "description": "Decides, case by case, whether a log fits a skeleton: which facts each case broke, and which facts the log breaks most often. This is what the skeleton is for — there is no alignment, no cost and no search, only a fact and the cases that broke it.",
+      "memory": "medium",
+      "agent": {
+        "whenToUse": "To test a skeleton from one period, site or system against another, or to find the cases in a log that do not behave like the rest.",
+        "notFor": "Scoring an imperative model — use conformance checking (alignments) for a Petri net."
+      },
+      "kernel": {
+        "class": "SkeletonCheck",
+        "abi": "scan-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        },
+        {
+          "name": "skeleton",
+          "type": "LogSkeleton",
+          "required": true,
+          "label": "a Log Skeleton"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "diagnostics",
+          "type": "LogSkeletonDiagnostics"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "maxCases": {
+            "type": "integer",
+            "title": "Cases to list",
+            "description": "How many non-fitting cases to name, worst first. The counts are over the whole log whatever this is set to.",
+            "default": 200,
+            "minimum": 10,
+            "maximum": 5000,
+            "cheap": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps only the most frequent activities. A fact about an activity outside the limit is reported as naming an activity this log does not record, rather than silently passing.",
+            "default": 64,
+            "minimum": 2,
+            "maximum": 128
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.log-skeleton.facts",
+      "label": "Facts",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "LogSkeleton"
+      ],
+      "primary": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "sort": {
+            "type": "string",
+            "title": "Order",
+            "enum": [
+              "relation",
+              "support",
+              "activity"
+            ],
+            "enumLabels": [
+              "By kind of fact",
+              "By how often they held",
+              "By activity"
+            ],
+            "default": "relation",
+            "cheap": true
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "id": "run.promenade.log-skeleton.classification",
+      "label": "Classification",
+      "kind": "sandboxed",
+      "entry": "view/classification.js",
+      "appliesTo": [
+        "LogSkeletonDiagnostics"
+      ],
+      "primary": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "show": {
+            "type": "string",
+            "title": "Show",
+            "enum": [
+              "broken",
+              "all"
+            ],
+            "enumLabels": [
+              "Broken facts only",
+              "Every fact"
+            ],
+            "default": "broken",
+            "cheap": true
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "consumes": [
+    "TraditionalEventLog",
+    "LogSkeleton",
+    "LogSkeletonDiagnostics"
+  ],
+  "recommends": [
+    "run.promenade.declare"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "Verbeek, H.M.W. and de Carvalho, R.M. (2018). Log skeletons: a classification approach to process discovery. arXiv:1806.08247. The four ordering relations are evaluated by the DECLARE plugin's crate, which implements the same semantics under their DECLARE names.",
+    "doi": "10.48550/arXiv.1806.08247",
+    "bibtex": "@article{verbeek2018logskeletons,\n  title   = {Log Skeletons: A Classification Approach to Process Discovery},\n  author  = {Verbeek, H. M. W. and de Carvalho, R. Medeiros},\n  journal = {arXiv:1806.08247},\n  year    = {2018},\n  doi     = {10.48550/arXiv.1806.08247}\n}"
+  },
+  "keywords": [
+    "log-skeleton",
+    "classification",
+    "conformance",
+    "declarative",
+    "process-discovery-contest",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/relations.md",
+      "title": "The relations"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

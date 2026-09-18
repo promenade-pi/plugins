@@ -1,0 +1,13 @@
+[package]
+name = "playout-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Timed play-out of an accepting Petri net into traces, independent of any host"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+soundness-core = { path = "../../../soundness-rs/crates/soundness-core" }
+
+[dev-dependencies]
+serde_json = "1"

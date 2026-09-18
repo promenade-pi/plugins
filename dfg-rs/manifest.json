@@ -1,0 +1,86 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.dfg-rs",
+  "name": "Directly-Follows Graph (Rust)",
+  "version": "0.1.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Discovers a directly-follows graph from an event log: for every pair of activities that ever occur back-to-back within a case, the number of times it happens, plus per-case start/end activities and per-activity frequency.",
+  "runtime": "wasm",
+  "entry": "promenade_dfg.js",
+  "wasm": "promenade_dfg_bg.wasm",
+  "compute": {
+    "wasi": "compute/promenade_dfg_wasi.wasm"
+  },
+  "actions": [
+    {
+      "id": "run.promenade.dfg-rs.discover",
+      "label": "Discover DFG (Rust)",
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "dfg",
+          "type": "DFG"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "minFrequency": {
+            "type": "integer",
+            "title": "Minimum frequency",
+            "description": "Hides an edge, start activity or end activity below this count.",
+            "default": 1,
+            "minimum": 1,
+            "primary": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps at most this many activities, most frequent first.",
+            "default": 24,
+            "minimum": 1,
+            "maximum": 500
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "kernel": {
+    "class": "DfgBuilder",
+    "abi": "scan-finalize/1"
+  },
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "homepage": "https://github.com/promenade-lab/dfg-rs",
+  "repository": "https://github.com/promenade-lab/dfg-rs",
+  "keywords": [
+    "dfg",
+    "directly-follows",
+    "discovery",
+    "rust",
+    "compute"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

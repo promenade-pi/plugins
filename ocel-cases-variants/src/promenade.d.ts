@@ -1,0 +1,66 @@
+/**
+ * The host-injected sandboxed-view API — see
+ * `app/src/ui/plugin-frame.html`'s `promenade` object for the real
+ * implementation this mirrors. Declared here only so this package
+ * type-checks standalone; it is never imported or bundled.
+ */
+export interface SelectionItem {
+  kind: 'event' | 'object' | 'activity' | 'objectType' | 'trace' | 'edge' | 'place' | 'transition';
+  id: string;
+}
+
+export interface DeclaredType {
+  name: string;
+  attributes: Array<{ name: string; type: 'string' | 'integer' | 'float' | 'boolean' | 'time' }>;
+}
+
+export interface OCEL2Semantics {
+  objectTypes: DeclaredType[];
+  eventTypes: DeclaredType[];
+  sourceFormat: 'json' | 'sqlite' | 'xml';
+}
+
+export interface ArtifactInfo {
+  id: string;
+  name: string;
+  type: string;
+  tables: Record<string, string>;
+  value: unknown;
+  semantics: OCEL2Semantics | null;
+}
+
+export interface SqlResult {
+  numRows: number;
+  columns: Record<string, unknown[]>;
+}
+
+export interface PromenadeApi {
+  sql(text: string): Promise<SqlResult>;
+  color(domain: string, value: string): string;
+  select(items: SelectionItem[]): void;
+  artifact(): ArtifactInfo;
+  theme(): Record<string, string>;
+  /** Whatever this same panel last handed to `setCachedState`, or `null`
+   * on a genuinely first open (or after a page reload — this does not
+   * survive that, only a tab close/reopen within the same session). An RPC,
+   * not a plain getter: a large cached value costs real structured-clone
+   * time, and this way that cost lands after the plugin has already
+   * mounted and rendered once (a loading state, typically) rather than
+   * before its first paintable frame, where nothing could show one. */
+  cachedState(): Promise<unknown>;
+  /** Hands the host a value to return via `cachedState()` next time this
+   * exact panel is reopened. Structured-cloned, so Maps/Sets/typed arrays
+   * survive intact. Pass `null` to forget it. */
+  setCachedState(value: unknown): void;
+  /** Publishes the host-validated, source-bound execution partition. */
+  publishExecutionPartition(payload: unknown, name?: string): Promise<{ id: string; name: string }>;
+  on(event: 'selection', fn: (sel: { items: SelectionItem[]; source?: string }) => void): void;
+  on(event: 'theme', fn: (payload: { theme: Record<string, string>; colors: unknown }) => void): void;
+  on(event: 'resize', fn: (size: { w: number; h: number }) => void): void;
+  on(event: 'params', fn: (params: Record<string, unknown>) => void): void;
+  ready(): void;
+}
+
+declare global {
+  const promenade: PromenadeApi;
+}

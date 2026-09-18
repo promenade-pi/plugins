@@ -1,0 +1,56 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocel-builder",
+  "name": "OCEL Builder",
+  "version": "0.4.0",
+  "license": "MIT",
+  "description": "Writes an OCEL 2.0 log by hand, schema first, and edits existing ones. Declare the event types and object types with their typed attributes (string / integer / float / boolean / time); each type gets its own tab — only its rows, only its own columns, no unavailable cells — with Excel-style editing: keyboard navigation, a fill handle, clipboard paste, autocomplete on every id, type and qualifier. Object attributes may be static or time-dependent, with a Changes tab recording the values an attribute took and when. A \"+ relation\" button on every Events/Objects row opens a small dialog to link an existing object or create one on the spot, without leaving the row for the E2O/O2O sheet. “Edit log” opens an existing OCEL 2.0 log the same way, with per-sheet search and paging, and publishes the result as a new artifact that records the log it came from. Everything is validated as you type, with one-click repairs, and every issue points at the exact row and tab it is about.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.ocel-builder.editor",
+      "label": "New OCEL 2.0 log…",
+      "entry": "plugin.js",
+      "standalone": true,
+      "publishes": [
+        "ObjectCentricEventLog"
+      ]
+    },
+    {
+      "id": "run.promenade.ocel-builder.edit",
+      "label": "Edit log",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "ObjectCentricEventLog"
+      ],
+      "publishes": [
+        "ObjectCentricEventLog"
+      ]
+    }
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "ocel",
+    "authoring",
+    "editor",
+    "spreadsheet",
+    "schema",
+    "object-centric",
+    "event-log"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "author": "István Koren"
+}

@@ -1,0 +1,128 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.net-reduce",
+  "name": "Petri Net Reduction",
+  "version": "0.1.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Removes the scaffolding from an accepting Petri net without changing what it does. A converted or discovered net carries a place per sequence flow and a silent transition per gateway — structure the construction needed and the process does not. Reduction fuses it away, and the promise is exact: the reduced net produces the same sequences of activities, and accepts the same ones. That is checked on every build by enumerating both nets' languages with the play-out plugin.",
+  "runtime": "wasm",
+  "entry": "promenade_net_reduce.js",
+  "wasm": "promenade_net_reduce_bg.wasm",
+  "actions": [
+    {
+      "id": "run.promenade.net-reduce.reduce",
+      "label": "Reduce net",
+      "description": "Applies the classical structural reductions — fusion of series and parallel places and transitions, elimination of self-loop places, removal of redundant places — to a fixpoint, keeping only the ones that preserve the net's language. Every visible activity survives; only silent scaffolding and redundant places go. The result is an ordinary Accepting Petri Net: it renders, replays, aligns and plays out like any other.",
+      "memory": "low",
+      "agent": {
+        "whenToUse": "After converting a BPMN diagram or a process tree to a Petri net, or before a state-space search: fewer places and silent transitions make soundness checking, alignment and play-out all cheaper, and the diagram readable.",
+        "notFor": "Simplifying a model in the sense of dropping behaviour. Nothing here removes an activity or a path — if the net was unreadable because the process is complex, it will still be.",
+        "examples": [
+          "the default settings on a net converted from BPMN, which is where the scaffolding is",
+          "dropImplicit false to keep every place and only fuse silent steps"
+        ]
+      },
+      "kernel": {
+        "class": "ReduceNet",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "net",
+          "type": "AcceptingPetriNet",
+          "required": true,
+          "label": "an Accepting Petri Net"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "net",
+          "type": "AcceptingPetriNet"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "dropSilent": {
+            "type": "boolean",
+            "title": "Remove silent steps that do nothing",
+            "description": "A silent transition whose inputs and outputs are the same leaves the marking exactly as it was and records nothing. It can only lengthen a firing sequence.",
+            "default": true,
+            "cheap": true
+          },
+          "fuseSeries": {
+            "type": "boolean",
+            "title": "Fuse steps in series",
+            "description": "A silent transition between two others, or between two places, collapses: the pair can only ever happen one after the other, and nothing observable separates them. This is where most of a converted net's size goes.",
+            "default": true,
+            "primary": true,
+            "cheap": true
+          },
+          "fuseParallel": {
+            "type": "boolean",
+            "title": "Fuse duplicates",
+            "description": "Two transitions with the same label, inputs and outputs are one transition; two places wired identically to the same transitions are one place. A trace cannot tell them apart.",
+            "default": true,
+            "cheap": true
+          },
+          "dropSelfLoops": {
+            "type": "boolean",
+            "title": "Remove self-loop places",
+            "description": "A place a transition borrows a token from and immediately returns holds a count that never changes. If it starts with enough tokens it constrains nothing.",
+            "default": true,
+            "cheap": true
+          },
+          "dropImplicit": {
+            "type": "boolean",
+            "title": "Remove redundant places",
+            "description": "A place another place already constrains — it never is the reason a transition cannot fire, and it says the same thing about finishing. Turn this off to keep the net's places exactly as they were and only fuse silent structure.",
+            "default": true,
+            "cheap": true
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "consumes": [
+    "AcceptingPetriNet"
+  ],
+  "recommends": [
+    "run.promenade.soundness",
+    "run.promenade.petrinet-layered"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "Murata, T. (1989). Petri nets: properties, analysis and applications. Proceedings of the IEEE 77(4), 541-580 — the six classical reduction rules are §5. Berthelot, G. (1986), Transformations and decompositions of nets, Advances in Petri Nets, LNCS 254, 359-376, is the reference for behaviour-preserving transformation; implicit places follow Colom, J.M. and Silva, M. (1990), Improving the linearly based characterization of P/T nets.",
+    "doi": "10.1109/5.24143",
+    "bibtex": "@article{murata1989petri,\n  title   = {Petri Nets: Properties, Analysis and Applications},\n  author  = {Murata, Tadao},\n  journal = {Proceedings of the IEEE},\n  volume  = {77}, number = {4}, pages = {541--580}, year = {1989},\n  doi     = {10.1109/5.24143}\n}"
+  },
+  "keywords": [
+    "petri-net",
+    "reduction",
+    "simplification",
+    "murata",
+    "implicit-places",
+    "silent-transitions",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/rules.md",
+      "title": "The rules"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

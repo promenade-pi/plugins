@@ -1,0 +1,46 @@
+{
+  "manifestVersion": 1,
+  "id": "org.promenade.net-editor",
+  "name": "Petri Net Editor",
+  "version": "0.2.2",
+  "description": "Draw a Petri net or an object-centric Petri net by hand, or open an existing one and edit it. Declare object types to turn a plain net into an OCPN: places and arcs gain a type, and arcs can be marked variable. Reads and writes PNML.",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Promenade"
+    }
+  ],
+  "keywords": [
+    "petri net",
+    "ocpn",
+    "editor",
+    "authoring",
+    "pnml"
+  ],
+  "runtime": "view",
+  "views": [
+    {
+      "id": "org.promenade.net-editor.new",
+      "label": "New Petri net / OCPN\u2026",
+      "entry": "plugin.js",
+      "standalone": true,
+      "publishes": [
+        "AcceptingPetriNet",
+        "ObjectCentricPetriNet"
+      ]
+    },
+    {
+      "id": "org.promenade.net-editor.edit",
+      "label": "Edit net",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "AcceptingPetriNet",
+        "ObjectCentricPetriNet"
+      ],
+      "publishes": [
+        "AcceptingPetriNet",
+        "ObjectCentricPetriNet"
+      ]
+    }
+  ]
+}

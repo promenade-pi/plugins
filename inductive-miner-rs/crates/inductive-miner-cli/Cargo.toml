@@ -1,0 +1,14 @@
+[package]
+name = "inductive-miner-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Differential-testing harness: JSON traces in, canonical process tree out"
+license = "MIT"
+
+[[bin]]
+name = "im"
+path = "src/main.rs"
+
+[dependencies]
+inductive-miner-core = { path = "../inductive-miner-core" }
+serde_json = "1"

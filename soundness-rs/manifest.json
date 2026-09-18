@@ -1,0 +1,111 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.soundness",
+  "name": "Soundness Checker",
+  "version": "0.1.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Verifies an accepting Petri net: is it a workflow net, and is it sound? Reports the three classical requirements — every case can still finish, finishes with nothing left over, and every transition can fire — plus boundedness, each decided exactly on the reachability graph and each failure carrying the firing sequence that demonstrates it. Discovery plugins produce nets; this is what says whether the net produced is one you can trust.",
+  "runtime": "wasm",
+  "entry": "promenade_soundness.js",
+  "wasm": "promenade_soundness_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "SoundnessReport",
+      "label": "Soundness Report",
+      "shortLabel": "Sound?",
+      "family": "result"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.soundness.check",
+      "label": "Check soundness",
+      "description": "Checks the workflow-net structure (one source place, one sink place, every node on a path between them) and then searches the net's reachable markings for the three soundness requirements. A net whose tokens can grow without limit is proven unbounded rather than searched forever. Each failure comes with the shortest firing sequence that reaches it.",
+      "memory": "medium",
+      "kernel": {
+        "class": "SoundnessCheck",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "net",
+          "type": "AcceptingPetriNet",
+          "required": true,
+          "label": "an Accepting Petri Net"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "SoundnessReport"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "maxStates": {
+            "type": "integer",
+            "title": "State limit",
+            "description": "How many reachable markings to enumerate before giving up. Reaching it makes the verdict 'undecided' — never 'unsound' — because an unfinished search has not seen the counterexample it would need. Only nets with a lot of concurrency get near it: parallel branches multiply.",
+            "default": 200000,
+            "minimum": 100,
+            "maximum": 5000000,
+            "primary": true
+          }
+        },
+        "required": [
+          "maxStates"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.soundness.report",
+      "label": "Soundness",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "SoundnessReport"
+      ]
+    }
+  ],
+  "consumes": [
+    "AcceptingPetriNet",
+    "SoundnessReport"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "van der Aalst, W.M.P. (1998). The Application of Petri Nets to Workflow Management. Journal of Circuits, Systems and Computers 8(1), 21-66. Unboundedness is decided with the covering test of Karp, R.M. and Miller, R.E. (1969), Parallel Program Schemata, JCSS 3(2), 147-195.",
+    "doi": "10.1142/S0218126698000043",
+    "bibtex": "@article{vanderaalst1998workflow,\n  title   = {The Application of Petri Nets to Workflow Management},\n  author  = {van der Aalst, Wil M. P.},\n  journal = {Journal of Circuits, Systems and Computers},\n  volume  = {8}, number = {1}, pages = {21--66}, year = {1998},\n  doi     = {10.1142/S0218126698000043}\n}"
+  },
+  "keywords": [
+    "soundness",
+    "verification",
+    "workflow-net",
+    "petri-net",
+    "deadlock",
+    "woflan",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

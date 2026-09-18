@@ -1,0 +1,208 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.playout",
+  "name": "Play-out",
+  "version": "0.1.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Simulates an accepting Petri net into a real event log — the inverse of discovery. Cases arrive as a Poisson process and activities take service time, so concurrent branches genuinely overlap rather than being interleaved after the fact; a seed makes the whole log reproducible. Either a sample of the process in operation, or every distinct trace the model can produce. The result is an ordinary event log: every miner, view and conformance checker in the workspace reads it, which is what makes a model testable and a miner benchmarkable against a process whose ground truth is known.",
+  "runtime": "wasm",
+  "entry": "promenade_playout.js",
+  "wasm": "promenade_playout_bg.wasm",
+  "actions": [
+    {
+      "id": "run.promenade.playout.simulate",
+      "label": "Play out",
+      "description": "Plays the net's token game with time: starting an activity takes its input tokens and its outputs appear only when it finishes, so two branches of an AND-split run at once. Every case written is a firing sequence of the net — a completed run, replayable on the model it came from — which is the property an executable invariant re-establishes on randomised nets at every build.",
+      "memory": "medium",
+      "agent": {
+        "whenToUse": "To obtain a log whose generating model is known exactly: benchmarking a miner, testing a conformance checker, or producing a demo log from a hand-drawn net.",
+        "notFor": "Forecasting or capacity planning. Durations are exponential draws from one mean, not a fitted simulation model, and there is no queueing for resources.",
+        "examples": [
+          "caseCount 1000, lifecycle startComplete for a log Split Miner 2.0 can read true concurrency from",
+          "mode extensive to enumerate a small model's whole language instead of sampling it",
+          "incomplete keep on an unsound net, for traces that deliberately do not fit"
+        ]
+      },
+      "kernel": {
+        "class": "Playout",
+        "abi": "value-finalize/1"
+      },
+      "inputs": [
+        {
+          "name": "net",
+          "type": "AcceptingPetriNet",
+          "required": true,
+          "label": "an Accepting Petri Net"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "description": "Whether to sample the process or enumerate it. A sample is what a log looks like: the same frequent path over and over, the rare branch occasionally. An enumeration is what the model can do at all, once each — the right input for comparing two models, the wrong one for anything that reads frequencies.",
+            "enum": [
+              "stochastic",
+              "extensive"
+            ],
+            "enumLabels": [
+              "Simulate cases",
+              "Every distinct trace"
+            ],
+            "default": "stochastic"
+          },
+          "caseCount": {
+            "type": "integer",
+            "title": "Cases",
+            "description": "How many cases to simulate. Cases that never reach the final marking are counted and reported, so an unsound net can yield fewer than asked for.",
+            "default": 1000,
+            "minimum": 1,
+            "maximum": 200000,
+            "primary": true,
+            "showWhen": {
+              "param": "mode",
+              "equals": "stochastic"
+            }
+          },
+          "traceLimit": {
+            "type": "integer",
+            "title": "Trace limit",
+            "description": "How many distinct traces to keep. A model with a loop has infinitely many and one with concurrency has factorially many, so this is a stopping rule rather than a preference; whether it stopped the search early is recorded with the log.",
+            "default": 1000,
+            "minimum": 1,
+            "maximum": 100000,
+            "showWhen": {
+              "param": "mode",
+              "equals": "extensive"
+            }
+          },
+          "maxLength": {
+            "type": "integer",
+            "title": "Steps per case",
+            "description": "The most transitions one case may fire before it is cut off. This is what keeps a loop the random walk never leaves from running forever; the cases it stops are reported rather than quietly shortened.",
+            "default": 200,
+            "minimum": 2,
+            "maximum": 10000
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed",
+            "description": "The same seed on the same net and settings gives byte-for-byte the same log, which is what makes a simulated benchmark citable. Change it for an independent sample of the same process.",
+            "default": 42,
+            "minimum": 0,
+            "maximum": 4294967295,
+            "showWhen": {
+              "param": "mode",
+              "equals": "stochastic"
+            }
+          },
+          "lifecycle": {
+            "type": "string",
+            "title": "Lifecycle",
+            "description": "Whether to record when an activity started as well as when it finished. Start events are what a log needs for durations, resource utilisation, and any miner that reads concurrency from overlapping executions rather than from interleaving.",
+            "enum": [
+              "complete",
+              "startComplete"
+            ],
+            "enumLabels": [
+              "Completions only",
+              "Start and complete"
+            ],
+            "default": "complete"
+          },
+          "incomplete": {
+            "type": "string",
+            "title": "Cases that never finish",
+            "description": "What to do with a case that deadlocked or hit the step limit. Discarding keeps the promise that every case in the log is a complete run of the model; keeping gives you traces that are real behaviour but do not finish — which is exactly what a conformance checker should be tested against.",
+            "enum": [
+              "discard",
+              "keep"
+            ],
+            "enumLabels": [
+              "Leave them out",
+              "Keep the prefix"
+            ],
+            "default": "discard",
+            "showWhen": {
+              "param": "mode",
+              "equals": "stochastic"
+            }
+          },
+          "arrivalMinutes": {
+            "type": "number",
+            "title": "Minutes between cases",
+            "description": "Mean time between case arrivals. Cases overlap in the log when this is shorter than a case takes, which is what gives a simulated log any concurrency between cases at all.",
+            "default": 15,
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "durationMinutes": {
+            "type": "number",
+            "title": "Minutes per activity",
+            "description": "Mean service time of one activity, drawn exponentially. Silent (routing) transitions take none, so a net full of taus does not stretch its own timeline.",
+            "default": 10,
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "resources": {
+            "type": "integer",
+            "title": "Resource pool",
+            "description": "How many people perform the work. Each activity is served by one group of the pool rather than by anyone at random, so handovers between activities are handovers between groups and an organisational miner has real structure to find. 0 leaves the log without resources.",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 500
+          }
+        },
+        "required": [
+          "mode",
+          "caseCount",
+          "lifecycle"
+        ]
+      }
+    }
+  ],
+  "consumes": [
+    "AcceptingPetriNet"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "Rozinat, A., Mans, R.S., Song, M. and van der Aalst, W.M.P. (2009). Discovering simulation models. Information Systems 34(3), 305-327 — the reference for what a simulation model of a process consists of: control flow, case arrivals, activity durations and a resource perspective. The token game itself is van der Aalst, W.M.P. (1998), The Application of Petri Nets to Workflow Management, JCSC 8(1), 21-66.",
+    "doi": "10.1016/j.is.2008.09.002",
+    "bibtex": "@article{rozinat2009simulation,\n  title   = {Discovering simulation models},\n  author  = {Rozinat, Anne and Mans, Ronny S. and Song, Minseok and van der Aalst, Wil M. P.},\n  journal = {Information Systems},\n  volume  = {34}, number = {3}, pages = {305--327}, year = {2009},\n  doi     = {10.1016/j.is.2008.09.002}\n}"
+  },
+  "keywords": [
+    "simulation",
+    "play-out",
+    "petri-net",
+    "event-log",
+    "benchmarking",
+    "ground-truth",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

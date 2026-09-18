@@ -1,0 +1,77 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocdfg-flow-view",
+  "name": "OC-DFG Viewer",
+  "version": "0.2.1",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "An interactive Object-Centric DFG renderer using React Flow and the same tuned ELK layered preset as the OCPN React Flow view. Object types are shown as colored parallel flows and can be toggled in the in-canvas legend.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.ocdfg-flow-view.view",
+      "label": "OC-DFG",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "OCDFG"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "title": "Flow direction",
+            "description": "Which way the process runs across the canvas. Left to right is the usual reading order; top to bottom suits a long chain of activities in a tall panel.",
+            "enum": [
+              "RIGHT",
+              "DOWN"
+            ],
+            "enumLabels": [
+              "Left to right",
+              "Top to bottom"
+            ],
+            "default": "RIGHT",
+            "cheap": true
+          },
+          "combineParallelArcs": {
+            "type": "boolean",
+            "title": "Combine parallel arcs",
+            "description": "Draw one arc per activity pair, with a color stripe per object type, instead of a separate overlapping arc for each object type.",
+            "default": false,
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "OCDFG"
+  ],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "object-centric",
+    "dfg",
+    "react-flow",
+    "elkjs",
+    "layout",
+    "view"
+  ],
+  "docs": [
+    {
+      "path": "README.md",
+      "title": "Read me"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

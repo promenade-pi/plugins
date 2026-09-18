@@ -1,0 +1,21 @@
+{
+  "name": "raw-artifact-viewer",
+  "private": true,
+  "version": "0.1.1",
+  "scripts": {
+    "build": "node build.js",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "harness": "node harness/stage.js",
+    "harness:rm": "node harness/stage.js --remove"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}

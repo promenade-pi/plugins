@@ -1,0 +1,9 @@
+[package]
+name = "ocim-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Pure Rust Object-Centric Inductive Miner and OCPT to OCPN conversion"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }

@@ -1,0 +1,832 @@
+{
+ "objectTypes": [
+  {
+   "name": "Item",
+   "count": 9300,
+   "route": [
+    "Add Item",
+    "Pick Item",
+    "Confirm Order",
+    "Pack Shipment"
+   ]
+  },
+  {
+   "name": "Order",
+   "count": 4460,
+   "route": [
+    "Create Order",
+    "Add Item",
+    "Confirm Order",
+    "Receive Payment",
+    "Close Order"
+   ]
+  },
+  {
+   "name": "Shipment",
+   "count": 2860,
+   "route": [
+    "Confirm Order",
+    "Pack Shipment",
+    "Ship Goods",
+    "Issue Invoice",
+    "Receive Payment"
+   ]
+  },
+  {
+   "name": "Invoice",
+   "count": 2100,
+   "route": [
+    "Confirm Order",
+    "Issue Invoice",
+    "Receive Payment"
+   ]
+  }
+ ],
+ "platforms": [
+  {
+   "id": "Create Order",
+   "activity": "Create Order",
+   "x": 0,
+   "z": 0,
+   "t": 0,
+   "radius": 0.28818657053670577,
+   "rank": 0,
+   "lane": 0,
+   "objectTypes": [
+    "Order"
+   ],
+   "counts": [
+    900
+   ],
+   "count": 900,
+   "isStart": true,
+   "isEnd": false
+  },
+  {
+   "id": "Add Item",
+   "activity": "Add Item",
+   "x": 1.5336130134927795,
+   "z": 0,
+   "t": 55,
+   "radius": 0.3593065067463898,
+   "rank": 1,
+   "lane": 0,
+   "objectTypes": [
+    "Item",
+    "Order"
+   ],
+   "counts": [
+    2400,
+    900
+   ],
+   "count": 3300,
+   "isStart": false,
+   "isEnd": false
+  },
+  {
+   "id": "Pick Item",
+   "activity": "Pick Item",
+   "x": 3.1972260269855592,
+   "z": -1.07930650674639,
+   "t": 775,
+   "radius": 0.3060284769425969,
+   "rank": 2,
+   "lane": -1,
+   "objectTypes": [
+    "Item"
+   ],
+   "counts": [
+    2400
+   ],
+   "count": 2400,
+   "isStart": false,
+   "isEnd": false
+  },
+  {
+   "id": "Confirm Order",
+   "activity": "Confirm Order",
+   "x": 5.0622260269855595,
+   "z": -1.07930650674639,
+   "t": 1205,
+   "radius": 0.46,
+   "rank": 3,
+   "lane": -1,
+   "objectTypes": [
+    "Item",
+    "Order",
+    "Shipment",
+    "Invoice"
+   ],
+   "counts": [
+    2400,
+    900,
+    640,
+    700
+   ],
+   "count": 4640,
+   "isStart": false,
+   "isEnd": false
+  },
+  {
+   "id": "Issue Invoice",
+   "activity": "Issue Invoice",
+   "x": 7.13222602698556,
+   "z": -2.1343510941880517,
+   "t": 66005,
+   "radius": 0.33504458744166166,
+   "rank": 4,
+   "lane": -2,
+   "objectTypes": [
+    "Shipment",
+    "Invoice"
+   ],
+   "counts": [
+    300,
+    700
+   ],
+   "count": 1000,
+   "isStart": false,
+   "isEnd": false
+  },
+  {
+   "id": "Pack Shipment",
+   "activity": "Pack Shipment",
+   "x": 7.13222602698556,
+   "z": -1.07930650674639,
+   "t": 6605,
+   "radius": 0.3545142099083768,
+   "rank": 4,
+   "lane": -1,
+   "objectTypes": [
+    "Item",
+    "Shipment"
+   ],
+   "counts": [
+    2100,
+    640
+   ],
+   "count": 2740,
+   "isStart": false,
+   "isEnd": false
+  },
+  {
+   "id": "Ship Goods",
+   "activity": "Ship Goods",
+   "x": 8.656254446802313,
+   "z": -1.07930650674639,
+   "t": 17405,
+   "radius": 0.28376900328666266,
+   "rank": 5,
+   "lane": -1,
+   "objectTypes": [
+    "Shipment"
+   ],
+   "counts": [
+    640
+   ],
+   "count": 640,
+   "isStart": false,
+   "isEnd": false
+  },
+  {
+   "id": "Receive Payment",
+   "activity": "Receive Payment",
+   "x": 10.52112532331211,
+   "z": -1.07930650674639,
+   "t": 208565,
+   "radius": 0.3949354382548984,
+   "rank": 6,
+   "lane": -1,
+   "objectTypes": [
+    "Order",
+    "Shipment",
+    "Invoice"
+   ],
+   "counts": [
+    880,
+    640,
+    700
+   ],
+   "count": 2220,
+   "isStart": false,
+   "isEnd": false
+  },
+  {
+   "id": "Close Order",
+   "activity": "Close Order",
+   "x": 12.125996199821905,
+   "z": -1.07930650674639,
+   "t": 208855,
+   "radius": 0.28787162690276435,
+   "rank": 7,
+   "lane": -1,
+   "objectTypes": [
+    "Order"
+   ],
+   "counts": [
+    880
+   ],
+   "count": 880,
+   "isStart": false,
+   "isEnd": true
+  }
+ ],
+ "lines": [
+  {
+   "id": "Add Item>Confirm Order|Order",
+   "link": "Add Item>Confirm Order",
+   "objectType": "Order",
+   "source": "Add Item",
+   "target": "Confirm Order",
+   "freq": 900,
+   "waitSecs": 735,
+   "backward": false,
+   "selfLoop": false,
+   "critical": false,
+   "points": [
+    {
+     "x": 1.5336130134927795,
+     "z": 0.065
+    },
+    {
+     "x": 2.430419520239169,
+     "z": 0.065
+    },
+    {
+     "x": 2.430419520239169,
+     "z": 0
+    },
+    {
+     "x": 4.064726026985559,
+     "z": 0
+    },
+    {
+     "x": 4.064726026985559,
+     "z": -1.0143065067463901
+    },
+    {
+     "x": 5.0622260269855595,
+     "z": -1.0143065067463901
+    }
+   ],
+   "dropAt": 4
+  },
+  {
+   "id": "Add Item>Pick Item|Item",
+   "link": "Add Item>Pick Item",
+   "objectType": "Item",
+   "source": "Add Item",
+   "target": "Pick Item",
+   "freq": 2400,
+   "waitSecs": 720,
+   "backward": false,
+   "selfLoop": false,
+   "critical": true,
+   "points": [
+    {
+     "x": 1.5336130134927795,
+     "z": -0.065
+    },
+    {
+     "x": 2.3004195202391693,
+     "z": -0.065
+    },
+    {
+     "x": 2.3004195202391693,
+     "z": -1.07930650674639
+    },
+    {
+     "x": 3.1972260269855592,
+     "z": -1.07930650674639
+    }
+   ],
+   "dropAt": 2
+  },
+  {
+   "id": "Confirm Order>Issue Invoice|Invoice",
+   "link": "Confirm Order>Issue Invoice",
+   "objectType": "Invoice",
+   "source": "Confirm Order",
+   "target": "Issue Invoice",
+   "freq": 700,
+   "waitSecs": 64800,
+   "backward": false,
+   "selfLoop": false,
+   "critical": true,
+   "points": [
+    {
+     "x": 5.0622260269855595,
+     "z": -1.24680650674639
+    },
+    {
+     "x": 5.929726026985559,
+     "z": -1.24680650674639
+    },
+    {
+     "x": 5.929726026985559,
+     "z": -2.1343510941880517
+    },
+    {
+     "x": 7.13222602698556,
+     "z": -2.1343510941880517
+    }
+   ],
+   "dropAt": 2
+  },
+  {
+   "id": "Confirm Order>Pack Shipment|Item",
+   "link": "Confirm Order>Pack Shipment",
+   "objectType": "Item",
+   "source": "Confirm Order",
+   "target": "Pack Shipment",
+   "freq": 2100,
+   "waitSecs": 5400,
+   "backward": false,
+   "selfLoop": false,
+   "critical": true,
+   "points": [
+    {
+     "x": 5.0622260269855595,
+     "z": -1.1168065067463901
+    },
+    {
+     "x": 6.05972602698556,
+     "z": -1.1168065067463901
+    },
+    {
+     "x": 6.05972602698556,
+     "z": -1.24680650674639
+    },
+    {
+     "x": 7.13222602698556,
+     "z": -1.24680650674639
+    }
+   ],
+   "dropAt": 2
+  },
+  {
+   "id": "Confirm Order>Pack Shipment|Shipment",
+   "link": "Confirm Order>Pack Shipment",
+   "objectType": "Shipment",
+   "source": "Confirm Order",
+   "target": "Pack Shipment",
+   "freq": 640,
+   "waitSecs": 5400,
+   "backward": false,
+   "selfLoop": false,
+   "critical": true,
+   "points": [
+    {
+     "x": 5.0622260269855595,
+     "z": -1.04180650674639
+    },
+    {
+     "x": 6.134726026985559,
+     "z": -1.04180650674639
+    },
+    {
+     "x": 6.134726026985559,
+     "z": -1.1718065067463899
+    },
+    {
+     "x": 7.13222602698556,
+     "z": -1.1718065067463899
+    }
+   ],
+   "dropAt": 2
+  },
+  {
+   "id": "Confirm Order>Receive Payment|Order",
+   "link": "Confirm Order>Receive Payment",
+   "objectType": "Order",
+   "source": "Confirm Order",
+   "target": "Receive Payment",
+   "freq": 880,
+   "waitSecs": 207360,
+   "backward": false,
+   "selfLoop": false,
+   "critical": true,
+   "points": [
+    {
+     "x": 5.0622260269855595,
+     "z": -0.9118065067463901
+    },
+    {
+     "x": 6.26472602698556,
+     "z": -0.9118065067463901
+    },
+    {
+     "x": 6.26472602698556,
+     "z": 0
+    },
+    {
+     "x": 9.58868988505721,
+     "z": 0
+    },
+    {
+     "x": 9.58868988505721,
+     "z": -0.94930650674639
+    },
+    {
+     "x": 10.52112532331211,
+     "z": -0.94930650674639
+    }
+   ],
+   "dropAt": 4
+  },
+  {
+   "id": "Create Order>Add Item|Order",
+   "link": "Create Order>Add Item",
+   "objectType": "Order",
+   "source": "Create Order",
+   "target": "Add Item",
+   "freq": 900,
+   "waitSecs": 55,
+   "backward": false,
+   "selfLoop": false,
+   "critical": true,
+   "points": [
+    {
+     "x": 0,
+     "z": 0
+    },
+    {
+     "x": 0.7668065067463897,
+     "z": 0
+    },
+    {
+     "x": 1.5336130134927795,
+     "z": 0
+    }
+   ],
+   "dropAt": 1
+  },
+  {
+   "id": "Issue Invoice>Receive Payment|Invoice",
+   "link": "Issue Invoice>Receive Payment",
+   "objectType": "Invoice",
+   "source": "Issue Invoice",
+   "target": "Receive Payment",
+   "freq": 700,
+   "waitSecs": 91000,
+   "backward": false,
+   "selfLoop": false,
+   "critical": false,
+   "points": [
+    {
+     "x": 7.13222602698556,
+     "z": -2.1343510941880517
+    },
+    {
+     "x": 9.45868988505721,
+     "z": -2.1343510941880517
+    },
+    {
+     "x": 9.45868988505721,
+     "z": -1.20930650674639
+    },
+    {
+     "x": 10.52112532331211,
+     "z": -1.20930650674639
+    }
+   ],
+   "dropAt": 2
+  },
+  {
+   "id": "Pack Shipment>Ship Goods|Shipment",
+   "link": "Pack Shipment>Ship Goods",
+   "objectType": "Shipment",
+   "source": "Pack Shipment",
+   "target": "Ship Goods",
+   "freq": 640,
+   "waitSecs": 10800,
+   "backward": false,
+   "selfLoop": false,
+   "critical": true,
+   "points": [
+    {
+     "x": 7.13222602698556,
+     "z": -1.07930650674639
+    },
+    {
+     "x": 7.894240236893936,
+     "z": -1.07930650674639
+    },
+    {
+     "x": 8.656254446802313,
+     "z": -1.07930650674639
+    }
+   ],
+   "dropAt": 1
+  },
+  {
+   "id": "Pick Item>Confirm Order|Item",
+   "link": "Pick Item>Confirm Order",
+   "objectType": "Item",
+   "source": "Pick Item",
+   "target": "Confirm Order",
+   "freq": 2400,
+   "waitSecs": 430,
+   "backward": false,
+   "selfLoop": false,
+   "critical": true,
+   "points": [
+    {
+     "x": 3.1972260269855592,
+     "z": -1.14430650674639
+    },
+    {
+     "x": 4.19472602698556,
+     "z": -1.14430650674639
+    },
+    {
+     "x": 5.0622260269855595,
+     "z": -1.14430650674639
+    }
+   ],
+   "dropAt": 1
+  },
+  {
+   "id": "Receive Payment>Close Order|Order",
+   "link": "Receive Payment>Close Order",
+   "objectType": "Order",
+   "source": "Receive Payment",
+   "target": "Close Order",
+   "freq": 880,
+   "waitSecs": 290,
+   "backward": false,
+   "selfLoop": false,
+   "critical": true,
+   "points": [
+    {
+     "x": 10.52112532331211,
+     "z": -1.07930650674639
+    },
+    {
+     "x": 11.323560761567007,
+     "z": -1.07930650674639
+    },
+    {
+     "x": 12.125996199821905,
+     "z": -1.07930650674639
+    }
+   ],
+   "dropAt": 1
+  },
+  {
+   "id": "Ship Goods>Receive Payment|Shipment",
+   "link": "Ship Goods>Receive Payment",
+   "objectType": "Shipment",
+   "source": "Ship Goods",
+   "target": "Receive Payment",
+   "freq": 640,
+   "waitSecs": 43200,
+   "backward": false,
+   "selfLoop": false,
+   "critical": false,
+   "points": [
+    {
+     "x": 8.656254446802313,
+     "z": -1.07930650674639
+    },
+    {
+     "x": 9.718689885057211,
+     "z": -1.07930650674639
+    },
+    {
+     "x": 10.52112532331211,
+     "z": -1.07930650674639
+    }
+   ],
+   "dropAt": 1
+  }
+ ],
+ "shafts": [
+  {
+   "id": "shaft:Add Item>Confirm Order",
+   "link": "Add Item>Confirm Order",
+   "x": 4.064726026985559,
+   "z": -1.0143065067463901,
+   "radius": 0.24,
+   "source": "Add Item",
+   "target": "Confirm Order",
+   "tTop": 55,
+   "tBottom": 1205,
+   "waitSecs": 735,
+   "critical": false,
+   "backward": false,
+   "objectTypes": [
+    "Order"
+   ],
+   "freq": 900
+  },
+  {
+   "id": "shaft:Add Item>Pick Item",
+   "link": "Add Item>Pick Item",
+   "x": 2.3004195202391693,
+   "z": -1.07930650674639,
+   "radius": 0.24,
+   "source": "Add Item",
+   "target": "Pick Item",
+   "tTop": 55,
+   "tBottom": 775,
+   "waitSecs": 720,
+   "critical": true,
+   "backward": false,
+   "objectTypes": [
+    "Item"
+   ],
+   "freq": 2400
+  },
+  {
+   "id": "shaft:Confirm Order>Issue Invoice",
+   "link": "Confirm Order>Issue Invoice",
+   "x": 5.929726026985559,
+   "z": -2.1343510941880517,
+   "radius": 0.24,
+   "source": "Confirm Order",
+   "target": "Issue Invoice",
+   "tTop": 1205,
+   "tBottom": 66005,
+   "waitSecs": 64800,
+   "critical": true,
+   "backward": false,
+   "objectTypes": [
+    "Invoice"
+   ],
+   "freq": 700
+  },
+  {
+   "id": "shaft:Confirm Order>Pack Shipment",
+   "link": "Confirm Order>Pack Shipment",
+   "x": 6.09722602698556,
+   "z": -1.20930650674639,
+   "radius": 0.24,
+   "source": "Confirm Order",
+   "target": "Pack Shipment",
+   "tTop": 1205,
+   "tBottom": 6605,
+   "waitSecs": 5400,
+   "critical": true,
+   "backward": false,
+   "objectTypes": [
+    "Item",
+    "Shipment"
+   ],
+   "freq": 2740
+  },
+  {
+   "id": "shaft:Confirm Order>Receive Payment",
+   "link": "Confirm Order>Receive Payment",
+   "x": 9.58868988505721,
+   "z": -0.94930650674639,
+   "radius": 0.24,
+   "source": "Confirm Order",
+   "target": "Receive Payment",
+   "tTop": 1205,
+   "tBottom": 208565,
+   "waitSecs": 207360,
+   "critical": true,
+   "backward": false,
+   "objectTypes": [
+    "Order"
+   ],
+   "freq": 880
+  },
+  {
+   "id": "shaft:Create Order>Add Item",
+   "link": "Create Order>Add Item",
+   "x": 0.7668065067463897,
+   "z": 0,
+   "radius": 0.24,
+   "source": "Create Order",
+   "target": "Add Item",
+   "tTop": 0,
+   "tBottom": 55,
+   "waitSecs": 55,
+   "critical": true,
+   "backward": false,
+   "objectTypes": [
+    "Order"
+   ],
+   "freq": 900
+  },
+  {
+   "id": "shaft:Issue Invoice>Receive Payment",
+   "link": "Issue Invoice>Receive Payment",
+   "x": 9.45868988505721,
+   "z": -1.20930650674639,
+   "radius": 0.24,
+   "source": "Issue Invoice",
+   "target": "Receive Payment",
+   "tTop": 66005,
+   "tBottom": 208565,
+   "waitSecs": 91000,
+   "critical": false,
+   "backward": false,
+   "objectTypes": [
+    "Invoice"
+   ],
+   "freq": 700
+  },
+  {
+   "id": "shaft:Pack Shipment>Ship Goods",
+   "link": "Pack Shipment>Ship Goods",
+   "x": 7.894240236893936,
+   "z": -1.07930650674639,
+   "radius": 0.24,
+   "source": "Pack Shipment",
+   "target": "Ship Goods",
+   "tTop": 6605,
+   "tBottom": 17405,
+   "waitSecs": 10800,
+   "critical": true,
+   "backward": false,
+   "objectTypes": [
+    "Shipment"
+   ],
+   "freq": 640
+  },
+  {
+   "id": "shaft:Pick Item>Confirm Order",
+   "link": "Pick Item>Confirm Order",
+   "x": 4.19472602698556,
+   "z": -1.14430650674639,
+   "radius": 0.24,
+   "source": "Pick Item",
+   "target": "Confirm Order",
+   "tTop": 775,
+   "tBottom": 1205,
+   "waitSecs": 430,
+   "critical": true,
+   "backward": false,
+   "objectTypes": [
+    "Item"
+   ],
+   "freq": 2400
+  },
+  {
+   "id": "shaft:Receive Payment>Close Order",
+   "link": "Receive Payment>Close Order",
+   "x": 11.323560761567007,
+   "z": -1.07930650674639,
+   "radius": 0.24,
+   "source": "Receive Payment",
+   "target": "Close Order",
+   "tTop": 208565,
+   "tBottom": 208855,
+   "waitSecs": 290,
+   "critical": true,
+   "backward": false,
+   "objectTypes": [
+    "Order"
+   ],
+   "freq": 880
+  },
+  {
+   "id": "shaft:Ship Goods>Receive Payment",
+   "link": "Ship Goods>Receive Payment",
+   "x": 9.718689885057211,
+   "z": -1.07930650674639,
+   "radius": 0.24,
+   "source": "Ship Goods",
+   "target": "Receive Payment",
+   "tTop": 17405,
+   "tBottom": 208565,
+   "waitSecs": 43200,
+   "critical": false,
+   "backward": false,
+   "objectTypes": [
+    "Shipment"
+   ],
+   "freq": 640
+  }
+ ],
+ "order": [
+  "Create Order",
+  "Add Item",
+  "Pick Item",
+  "Confirm Order",
+  "Issue Invoice",
+  "Pack Shipment",
+  "Ship Goods",
+  "Receive Payment",
+  "Close Order"
+ ],
+ "extent": {
+  "x": 12.413867826724669,
+  "z": 2.469395681629713
+ },
+ "stats": {
+  "activities": 9,
+  "lines": 12,
+  "shafts": 11,
+  "objectTypes": 4,
+  "maxTimeSecs": 208855,
+  "hasTiming": true,
+  "droppedActivities": 0,
+  "droppedEdges": 2,
+  "coverage": 0.975575221238938,
+  "basis": "OCDFG"
+ }
+}

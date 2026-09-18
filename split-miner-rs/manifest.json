@@ -1,0 +1,157 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.split-miner",
+  "name": "Split Miner",
+  "version": "0.1.1",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Augusto, Conforti, Dumas, La Rosa and Polyvyanyy's Split Miner: an event log to a BPMN model in five steps — directly-follows graph and loops, concurrency, filtering, split gateways, join gateways. It is not restricted to block-structured models the way the Inductive Miner is, and it is guaranteed to produce deadlock-free ones, which is what makes it the accuracy-versus-simplicity benchmark other miners are measured against. The 2.0 variant reads concurrency from activities whose executions overlap in time rather than from interleaving, and can tell an inclusive choice from a parallel one.",
+  "runtime": "wasm",
+  "entry": "promenade_split_miner.js",
+  "wasm": "promenade_split_miner_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "Bpmn",
+      "label": "BPMN Diagram",
+      "shortLabel": "BPMN",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.split-miner.discover",
+      "label": "Split Miner",
+      "description": "Discovers a BPMN process model from a traditional event log. Concurrency is detected and pruned out of the directly-follows graph before any filtering, so causality and concurrency are never confused; the filter keeps every activity connected to its most frequent predecessor and successor whatever the threshold does, so no activity is stranded; and split and join gateways are then derived from the concurrency relations rather than guessed from arc counts.",
+      "memory": "medium",
+      "kernel": {
+        "class": "SplitMinerScan",
+        "abi": "scan-finalize/1",
+        "scan": {
+          "classifier": "activityLifecycle"
+        }
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bpmn",
+          "type": "Bpmn"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "eta": {
+            "type": "number",
+            "title": "Filter percentile (η)",
+            "description": "How much of the directly-follows graph to keep. Lower keeps more arcs — higher fitness, lower precision, a busier diagram. Every activity keeps its most frequent way in and way out whatever this is set to, so raising it simplifies the model rather than breaking it apart.",
+            "default": 0.4,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "primary": true,
+            "cheap": true
+          },
+          "variant": {
+            "type": "string",
+            "title": "Variant",
+            "description": "Which paper's concurrency oracle to use. Split Miner 2.0 needs a log that records when activities start as well as when they finish; on a log without that it has nothing to measure and says so.",
+            "enum": [
+              "sm1",
+              "sm2"
+            ],
+            "enumLabels": [
+              "Split Miner (2019)",
+              "Split Miner 2.0 (2021) — true concurrency"
+            ],
+            "default": "sm1"
+          },
+          "epsilon": {
+            "type": "number",
+            "title": "Parallelism threshold (ε)",
+            "description": "How unbalanced two activities' orderings may be and still count as concurrent. 0 demands they be observed in both orders exactly equally often; 1 accepts any pair seen in both orders at all. The value the paper's own tuning across twelve real-life logs settled on is 0.1.",
+            "default": 0.1,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "showWhen": {
+              "param": "variant",
+              "equals": "sm1"
+            }
+          },
+          "overlap": {
+            "type": "number",
+            "title": "Overlap threshold (ε)",
+            "description": "The share of two activities' executions that must overlap in time before they count as concurrent. 1 demands every execution overlap — the strict notion of simultaneousness, which real logs rarely satisfy; lower accepts the parametrised weak form.",
+            "default": 0.5,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "showWhen": {
+              "param": "variant",
+              "equals": "sm2"
+            }
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps only the most frequent activities. Split discovery is quartic in the number of activities, so a log with hundreds is worth bounding before it is worth waiting for.",
+            "default": 128,
+            "minimum": 2,
+            "maximum": 512
+          }
+        },
+        "required": [
+          "eta",
+          "variant"
+        ]
+      }
+    }
+  ],
+  "consumes": [
+    "TraditionalEventLog"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "Augusto, A., Conforti, R., Dumas, M., La Rosa, M., Polyvyanyy, A. (2019). Split miner: automated discovery of accurate and simple business process models from event logs. Knowledge and Information Systems 59(2), 251-284. The second variant implements Augusto, A., Dumas, M., La Rosa, M. (2021), Automated Discovery of Process Models with True Concurrency and Inclusive Choices, ICPM Workshops, LNBIP 406, 43-56.",
+    "doi": "10.1007/s10115-018-1214-x",
+    "bibtex": "@article{augusto2019splitminer,\n  title   = {Split miner: automated discovery of accurate and simple business process models from event logs},\n  author  = {Augusto, Adriano and Conforti, Raffaele and Dumas, Marlon and La Rosa, Marcello and Polyvyanyy, Artem},\n  journal = {Knowledge and Information Systems},\n  volume  = {59}, number = {2}, pages = {251--284}, year = {2019},\n  doi     = {10.1007/s10115-018-1214-x}\n}"
+  },
+  "keywords": [
+    "discovery",
+    "bpmn",
+    "split-miner",
+    "concurrency",
+    "filtering",
+    "gateways",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "docs/licensing.md",
+      "title": "Licensing"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

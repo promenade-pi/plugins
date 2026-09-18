@@ -1,0 +1,43 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.raw-artifact-viewer",
+  "name": "Raw Artifact Viewer",
+  "version": "0.1.1",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Looks at an artifact the way its storage does: a tree of the files actually present in its OPFS directory — Parquet relations, the catalog sidecar, a materialized JSON payload, anything left beside them — and, for a selected Parquet file, a paginated table of its rows straight out of the file, with its schema, row-group count and compression codec. The catalog's list of relations and what is on disk are not the same list, and this view is about the difference: it is the panel to open when a log's numbers look wrong, when an artifact takes more space than it should, or when a plugin's output needs checking against the bytes rather than against another view of them. Every value is rendered by DuckDB itself, so what the table shows is what the file says, not a re-interpretation of it.",
+  "runtime": "view",
+  "views": [
+    {
+      "id": "run.promenade.raw-artifact-viewer.files",
+      "label": "Inspect raw artifact files",
+      "entry": "plugin.js",
+      "readsFiles": true
+    }
+  ],
+  "consumes": [],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "storage",
+    "parquet",
+    "opfs",
+    "inspector",
+    "debugging",
+    "table",
+    "view"
+  ],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

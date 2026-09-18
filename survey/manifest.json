@@ -1,0 +1,114 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.survey",
+  "name": "Survey & Task",
+  "version": "0.1.3",
+  "author": "Istv\u00e1n Koren",
+  "license": "MIT",
+  "description": "Runs a study inside the workspace: a questionnaire panel that opens the visualisation each question is about, beside itself, with the parameters the author captured \u2014 and reads back what the participant did to it. A question can therefore be a task rather than a description of one, and its answer can be an element selected in a diagram or the state a filter was left in, not only a typed sentence. Nine question kinds, counterbalanced A/B blocks so a comparison is not also measuring which condition came first, and a response recorded with the stimulus and its parameters as submitted, so any answer can be put back on screen exactly as it was given. Surveys and responses are ordinary artifacts \u2014 a response is a provenance child of the questionnaire and of the log it was run against \u2014 and JSON export/import carries them between machines, which is what a study on more than one participant needs.",
+  "runtime": "view",
+  "artifactTypes": [
+    {
+      "id": "Survey",
+      "label": "Survey",
+      "shortLabel": "SURVEY",
+      "family": "model"
+    },
+    {
+      "id": "SurveyResponse",
+      "label": "Survey response",
+      "shortLabel": "RESPONSE",
+      "family": "result"
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.survey.run",
+      "label": "Run survey",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "Survey"
+      ],
+      "ownsControls": true,
+      "readsWorkspace": true,
+      "publishes": [
+        "SurveyResponse"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "draft": {
+            "type": "object",
+            "title": "Run in progress",
+            "description": "The participant's answers so far, kept by the host so a reload does not lose a part-finished run. Not something to edit by hand."
+          }
+        }
+      },
+      "dock": "right"
+    },
+    {
+      "id": "run.promenade.survey.edit",
+      "label": "Edit survey",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "Survey"
+      ],
+      "ownsControls": true,
+      "readsWorkspace": true,
+      "publishes": [
+        "Survey"
+      ],
+      "dock": "right"
+    },
+    {
+      "id": "run.promenade.survey.new",
+      "label": "New survey…",
+      "entry": "plugin.js",
+      "standalone": true,
+      "ownsControls": true,
+      "readsWorkspace": true,
+      "publishes": [
+        "Survey"
+      ],
+      "dock": "right"
+    },
+    {
+      "id": "run.promenade.survey.responses",
+      "label": "Response",
+      "entry": "plugin.js",
+      "appliesTo": [
+        "SurveyResponse"
+      ],
+      "ownsControls": true
+    }
+  ],
+  "consumes": [
+    "Survey",
+    "SurveyResponse"
+  ],
+  "layouts": [],
+  "authors": [
+    {
+      "name": "Istv\u00e1n Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "survey",
+    "questionnaire",
+    "user-study",
+    "usability",
+    "evaluation",
+    "a-b-test",
+    "experiment",
+    "view"
+  ],
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

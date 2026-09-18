@@ -1,0 +1,21 @@
+{
+  "name": "ocel-builder",
+  "private": true,
+  "version": "0.4.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test test/*.test.ts",
+    "check": "tsc --noEmit && npm test --silent"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}

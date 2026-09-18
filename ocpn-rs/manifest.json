@@ -1,0 +1,182 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocpn",
+  "name": "Object-Centric Petri Net Discovery",
+  "version": "0.2.6",
+  "license": "MIT",
+  "description": "Discovers an Object-Centric Petri Net from an OCEL 2.0 log: per selected object type, project the log, mine a process tree with Inductive Miner, convert it to a Petri net, then merge every object type's net by shared activity. One action, selectable directly on the OCEL log — the projection this needs runs transparently as its own internal stage.",
+  "apiVersion": "1",
+  "actions": [
+    {
+      "id": "run.promenade.ocpn.project",
+      "label": "Project for OCPN discovery",
+      "internal": true,
+      "runtime": "relational",
+      "queryFile": "project.sql",
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "projected",
+          "type": "TraditionalEventLog"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectTypes": {
+            "type": "array",
+            "title": "Object types",
+            "description": "Which object types participate in discovery. Empty means every object type present in the log.",
+            "default": [],
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "id": "run.promenade.ocpn.discover",
+      "label": "Discover OCPN (Rust)",
+      "runtime": "wasm",
+      "entry": "promenade_ocpn.js",
+      "wasm": "promenade_ocpn_bg.wasm",
+      "scans": "TraditionalEventLog",
+      "scanAction": "run.promenade.ocpn.project",
+      "kernel": {
+        "class": "OcpnScan",
+        "abi": "scan-finalize/1",
+        "scan": {
+          "order": "timestamp",
+          "includeEmptyTraces": true,
+          "activityIds": "firstAppearance"
+        }
+      },
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ocpn",
+          "type": "ObjectCentricPetriNet"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "objectTypes": {
+            "type": "array",
+            "title": "Object types",
+            "description": "Which object types participate in discovery. Empty means every object type present in the log.",
+            "default": [],
+            "optionsFrom": {
+              "sql": "SELECT object_type AS value, COUNT(*) AS n FROM {object} GROUP BY 1 ORDER BY n DESC",
+              "countField": "n",
+              "colorDomain": "objectType"
+            }
+          },
+          "variableMultiplicity": {
+            "type": "array",
+            "title": "Variable-arc pairs",
+            "description": "Filled in automatically from the log's own internal projection step — (object type, activity) pairs where at least one event touched more than one object of that type. Not user-editable.",
+            "default": []
+          },
+          "minerVariant": {
+            "type": "string",
+            "title": "Miner variant",
+            "description": "IM guarantees every object type's lifecycle replays every trace it was discovered from. IMf gives that up in exchange for ignoring infrequent behavior, and is the usual choice on a real log.",
+            "enum": [
+              "IMf",
+              "IM"
+            ],
+            "default": "IMf",
+            "primary": true
+          },
+          "noiseThreshold": {
+            "type": "number",
+            "title": "Noise threshold",
+            "description": "IMf only. How weak a path has to be, relative to the strongest alternative, before it is treated as noise. Applied independently within each object type's own lifecycle.",
+            "default": 0.2,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01
+          }
+        },
+        "required": [
+          "minerVariant",
+          "noiseThreshold"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.ocpn.view",
+      "label": "Object-centric Petri net",
+      "kind": "native",
+      "native": "core.ocpnView",
+      "appliesTo": [
+        "ObjectCentricPetriNet"
+      ]
+    }
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "van der Aalst, W.M.P., Berti, A. (2020). Discovering Object-centric Petri Nets. Fundamenta Informaticae, 175(1-4), 1-40.",
+    "doi": "10.3233/FI-2020-1946"
+  },
+  "keywords": [
+    "discovery",
+    "object-centric",
+    "petri-net",
+    "ocel",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "docs/architecture.md",
+      "title": "Architecture"
+    },
+    {
+      "path": "docs/testing.md",
+      "title": "Testing"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "author": "Promenade Team"
+}

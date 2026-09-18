@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Local Process Models view harness</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; }
+      body { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      #root { position: absolute; inset: 0; }
+      #probe {
+        position: fixed; bottom: 0; right: 0; z-index: 99;
+        background: #111; color: #0f0; font: 11px ui-monospace, monospace;
+        padding: 4px 8px; white-space: pre;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="probe">booting…</div>
+    <script type="module">
+      // Same idea as `fuzzy-miner-rs`'s harness: the real bundle, driven by
+      // the real wasm kernel against a synthetic log, but in an ordinary
+      // page where a test driver's synthetic clicks/keys actually land — the
+      // sandboxed frame the app really uses cannot receive them at all.
+      import init, { LpmScan } from './promenade_lpm.js';
+
+      // A log with a clear recurring "check -> approve -> notify" fragment
+      // buried among noise activities, plus an unrelated exclusive-choice
+      // pair — enough for the table to show a non-trivial ranking.
+      function makeLog() {
+        let s = 12345;
+        const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 1e6) / 1e6; };
+        const names = ['start', 'check', 'approve', 'notify', 'noiseA', 'noiseB', 'branchLeft', 'branchRight', 'end'];
+        const cases = [], acts = [];
+        for (let c = 0; c < 400; c++) {
+          const trace = [0];
+          const repeats = 1 + (rnd() < 0.4 ? 1 : 0) + (rnd() < 0.15 ? 1 : 0);
+          for (let i = 0; i < repeats; i++) { trace.push(1, 2, 3); }
+          if (rnd() < 0.3) trace.push(4);
+          if (rnd() < 0.2) trace.push(5);
+          trace.push(rnd() < 0.5 ? 6 : 7);
+          trace.push(8);
+          for (const a of trace) { cases.push(c); acts.push(a); }
+        }
+        return { names, cases, acts };
+      }
+
+      const log = makeLog();
+      await init({ module_or_path: './promenade_lpm_bg.wasm' });
+      const scan = new LpmScan(log.names.length);
+      scan.setActivityNames(log.names);
+      scan.pushChunk(Int32Array.from(log.cases), Int32Array.from(log.acts));
+      scan.finish();
+      const result = scan.finalize({
+        numTransitions: 4, topK: 25, maxActivities: 20,
+        frequencyMinimum: 10, determinismMinimum: 0.49, languageFitMinimum: 0.49,
+        confidenceMinimum: 0, coverageMinimum: 0, duplicateTransitions: false,
+        useSeq: true, useXor: true, useAnd: true, useOr: false, useXorLoop: true,
+        supportWeight: 0.1, confidenceWeight: 0.4, determinismWeight: 0.3, coverageWeight: 0,
+        languageFitWeight: 0.1, avgNumFiringsWeight: 0.1, numTransitionsWeight: 0,
+        maxSearchMillis: 15000, maxAlignStates: 20000, maxLoop: 3,
+      });
+
+      const theme = {
+        bg: '#ffffff', 'bg-soft': '#f6f7f9', 'bg-sunken': '#eef0f3', border: '#dcdfe4',
+        text: '#1c2027', 'text-dim': '#697386', accent: '#2563eb', warn: '#9a6700',
+      };
+      const handlers = {};
+      window.__selected = null;
+      window.promenade = {
+        // ?noresult reproduces a reloaded session with nothing in memory.
+        artifact: () => ({ id: 'harness', name: 'Harness', type: 'LocalProcessModelSet', tables: {},
+          value: location.search.includes('noresult') ? null : result }),
+        theme: () => theme,
+        color: () => '#2563eb',
+        select: (items) => { window.__selected = items; },
+        setParams: (patch) => { window.__written = patch; },
+        on: (event, fn) => { handlers[event] = fn; },
+        ready: () => { window.__ready = true; },
+      };
+      window.__dark = () => handlers.theme && handlers.theme({ theme: {
+        bg: '#14171c', 'bg-soft': '#1c2027', border: '#333a44',
+        text: '#e6e9ee', 'text-dim': '#98a2b3', accent: '#5b8cff',
+      }, colors: {} });
+      window.__stats = result.stats;
+      document.getElementById('probe').textContent =
+        `${result.entries.length} entries · ${result.stats.candidatesScored} scored`;
+      const s = document.createElement('script');
+      s.src = './plugin.js';
+      document.body.appendChild(s);
+    </script>
+  </body>
+</html>

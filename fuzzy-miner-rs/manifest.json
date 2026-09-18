@@ -1,0 +1,450 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.fuzzy-miner",
+  "name": "Fuzzy Miner",
+  "version": "0.5.1",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Günther & van der Aalst's Fuzzy Miner for case-centric event logs: instead of a control-flow model it measures the log from several perspectives — frequency and routing significance per activity, frequency and distance significance per relation, and proximity, endpoint and originator correlation — and hands back the whole weighted graph. Simplification is interactive: the Fuzzy graph view's collapsible slider rail resolves concurrency conflicts, thins edges and folds insignificant activities into clusters, live, exactly the way ProM's original does.",
+  "runtime": "wasm",
+  "entry": "promenade_fuzzy_miner.js",
+  "wasm": "promenade_fuzzy_miner_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "FuzzyModel",
+      "label": "Fuzzy Model",
+      "shortLabel": "FUZZY",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.fuzzy-miner.discover",
+      "label": "Fuzzy Miner",
+      "memory": "medium",
+      "kernel": {
+        "class": "FuzzyScan",
+        "abi": "scan-finalize/1",
+        "scan": {
+          "order": "timestamp",
+          "resource": true
+        }
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "FuzzyModel"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "maximalDistance": {
+            "type": "integer",
+            "title": "Maximal event distance",
+            "description": "How many events back a relation is still counted. 1 is the plain directly-follows relation; the original's default of 5 also credits indirect successors, attenuated by how far away they are. ProM's own GUI allows up to 100; this caps at 20 to keep the scan's memory bounded at the activity limit's upper end — comfortably past anything the reference implementation's own default (5) or its batch operator's own default (1) ever exercises.",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 20,
+            "primary": true,
+            "cheap": true
+          },
+          "attenuation": {
+            "type": "string",
+            "title": "Attenuation",
+            "description": "How fast a relation's weight decays with distance. \"Nth root\" divides by the radical once per step (the original's default); \"Linear\" fades evenly across the radical's worth of steps and then to nothing.",
+            "enum": [
+              "nRoot",
+              "linear"
+            ],
+            "default": "nRoot",
+            "cheap": true
+          },
+          "radical": {
+            "type": "number",
+            "title": "Radical",
+            "description": "The attenuation's steepness — ProM calls it the radical, or the number of echelons. Larger means a faster decay under \"Nth root\", a longer reach under \"Linear\".",
+            "default": 2.7,
+            "minimum": 1.1,
+            "maximum": 10,
+            "multipleOf": 0.1,
+            "cheap": true
+          },
+          "frequencySignificanceUnary": {
+            "type": "number",
+            "title": "Weight: frequency significance (activity)",
+            "description": "How much an activity's raw occurrence count contributes to its significance. 0 excludes the metric entirely.",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "invertFrequencySignificanceUnary": {
+            "type": "boolean",
+            "title": "Invert: frequency significance (activity)",
+            "description": "Flip this metric so the least frequent activities score highest instead of the most frequent ones.",
+            "default": false,
+            "cheap": true
+          },
+          "routingSignificanceUnary": {
+            "type": "number",
+            "title": "Weight: routing significance (activity)",
+            "description": "How much an activity's in/out imbalance contributes to its significance. A pure split or join scores 1, a pass-through 0 — it is what keeps a rare but structurally decisive activity on the map.",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "invertRoutingSignificanceUnary": {
+            "type": "boolean",
+            "title": "Invert: routing significance (activity)",
+            "description": "Flip this metric so a pass-through activity scores highest instead of a pure split or join.",
+            "default": false,
+            "cheap": true
+          },
+          "frequencySignificanceBinary": {
+            "type": "number",
+            "title": "Weight: frequency significance (relation)",
+            "description": "How much a relation's attenuated observation count contributes to its significance.",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "invertFrequencySignificanceBinary": {
+            "type": "boolean",
+            "title": "Invert: frequency significance (relation)",
+            "description": "Flip this metric so the least-observed relations score highest instead of the most-observed ones.",
+            "default": false,
+            "cheap": true
+          },
+          "distanceSignificanceBinary": {
+            "type": "number",
+            "title": "Weight: distance significance (relation)",
+            "description": "Penalises a weak relation between two highly significant activities — the signature of a long-distance shortcut rather than a real hand-off.",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "invertDistanceSignificanceBinary": {
+            "type": "boolean",
+            "title": "Invert: distance significance (relation)",
+            "description": "Flip this metric so a long-distance shortcut between two significant activities scores highest instead of lowest.",
+            "default": false,
+            "cheap": true
+          },
+          "proximityCorrelation": {
+            "type": "number",
+            "title": "Weight: proximity correlation",
+            "description": "Two events close together in time are more likely to belong together. Needs timestamps.",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "invertProximityCorrelation": {
+            "type": "boolean",
+            "title": "Invert: proximity correlation",
+            "description": "Flip this metric so events far apart in time score highest instead of events close together.",
+            "default": false,
+            "cheap": true
+          },
+          "endpointCorrelation": {
+            "type": "number",
+            "title": "Weight: endpoint correlation",
+            "description": "How similar the two activity names are, by edit distance — \"Check invoice\" and \"Check order\" look related, and in most logs that naming is not an accident.",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "invertEndpointCorrelation": {
+            "type": "boolean",
+            "title": "Invert: endpoint correlation",
+            "description": "Flip this metric so dissimilarly named activities score highest instead of similarly named ones.",
+            "default": false,
+            "cheap": true
+          },
+          "originatorCorrelation": {
+            "type": "number",
+            "title": "Weight: originator correlation",
+            "description": "How similar the two events' org:resource values are. Silently contributes nothing on a log without resources — the Statistics panel reports whether this log has any.",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "invertOriginatorCorrelation": {
+            "type": "boolean",
+            "title": "Invert: originator correlation",
+            "description": "Flip this metric so events done by different resources score highest instead of events done by the same resource.",
+            "default": false,
+            "cheap": true
+          },
+          "includeMetricDetail": {
+            "type": "boolean",
+            "title": "Keep per-metric values",
+            "description": "Carry each metric's own normalised matrix in the result, not just the weighted totals. Roughly quadruples the model's size; off unless you want to inspect the individual perspectives.",
+            "default": false,
+            "cheap": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Activity limit",
+            "description": "Keeps only the most frequent activities. The metrics are n×n matrices, so this is the one setting that changes what has to be re-scanned.",
+            "default": 60,
+            "minimum": 2,
+            "maximum": 300
+          }
+        },
+        "required": [
+          "maximalDistance",
+          "attenuation",
+          "radical"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.fuzzy-miner.graphView",
+      "label": "Fuzzy graph",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "FuzzyModel"
+      ],
+      "primary": true,
+      "ownsControls": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "nodeCutoff": {
+            "type": "number",
+            "title": "Node cutoff",
+            "description": "Activities below this significance are folded into clusters, or dropped when clustering cannot place them.",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "cheap": true
+          },
+          "edgeTransform": {
+            "type": "string",
+            "title": "Edge transformer",
+            "description": "\"Fuzzy edges\" keeps, per activity, every relation within the cutoff of its best one. \"Best edges\" keeps only the single strongest predecessor and successor.",
+            "enum": [
+              "fuzzy",
+              "best"
+            ],
+            "default": "fuzzy",
+            "cheap": true
+          },
+          "edgeCutoff": {
+            "type": "number",
+            "title": "Edge cutoff",
+            "description": "How far below an activity's strongest relation a relation may fall and still be drawn. 0 keeps only the best, 1 keeps everything.",
+            "default": 0.2,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "cheap": true
+          },
+          "utilityRatio": {
+            "type": "number",
+            "title": "Utility ratio",
+            "description": "How the edge filter ranks a relation: 1 purely by significance, 0 purely by correlation.",
+            "default": 0.75,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "cheap": true
+          },
+          "interpretAbsolute": {
+            "type": "boolean",
+            "title": "Interpret cutoff absolutely",
+            "description": "Rank an activity's incoming and outgoing relations against one shared range instead of two separate ones.",
+            "default": false,
+            "cheap": true
+          },
+          "ignoreSelfLoops": {
+            "type": "boolean",
+            "title": "Ignore self-loops",
+            "description": "Leave self-loops out of the edge filter's ranking, so a dominant self-loop cannot suppress an activity's real relations.",
+            "default": true,
+            "cheap": true
+          },
+          "filterConcurrency": {
+            "type": "boolean",
+            "title": "Resolve concurrency",
+            "description": "Where A and B relate in both directions, decide whether that is genuine concurrency or an artifact, and drop the artifact.",
+            "default": true,
+            "cheap": true
+          },
+          "concurrencyPreserve": {
+            "type": "number",
+            "title": "Preserve threshold",
+            "description": "A two-way relation whose halves are both this important to their endpoints is left alone as real concurrency.",
+            "default": 0.6,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "cheap": true
+          },
+          "concurrencyRatio": {
+            "type": "number",
+            "title": "Ratio threshold",
+            "description": "How lopsided the two halves must be before the weaker one is treated as noise and removed on its own. Above this, both go.",
+            "default": 0.7,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "cheap": true
+          },
+          "edgeLabel": {
+            "type": "string",
+            "title": "Edge labels",
+            "description": "What to print on each arc.",
+            "enum": [
+              "none",
+              "significance",
+              "both"
+            ],
+            "default": "significance",
+            "cheap": true
+          },
+          "dropDisconnected": {
+            "type": "boolean",
+            "title": "Hide disconnected activities",
+            "description": "Leave out an activity that survived every filter but ended up with no relations at all.",
+            "default": true,
+            "cheap": true
+          }
+        }
+      }
+    },
+    {
+      "id": "run.promenade.fuzzy-miner.metricsView",
+      "label": "Fuzzy metrics",
+      "kind": "sandboxed",
+      "entry": "view/matrix.js",
+      "appliesTo": [
+        "FuzzyModel"
+      ],
+      "ownsControls": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "title": "View",
+            "description": "Matrix shows the binary (per-pair) metrics as a coloured grid; Curves shows the unary (per-activity) metrics overlaid as line charts, ProM's other Fuzzy Miner metrics panel; Distances is a diagnostic ProM doesn't have: how many relation observations the scan found at each look-back distance, with the current attenuation curve overlaid, to inform whether raising the maximal distance (set on the action itself) would actually capture more.",
+            "enum": [
+              "matrix",
+              "curves",
+              "histogram"
+            ],
+            "default": "matrix",
+            "cheap": true
+          },
+          "metric": {
+            "type": "string",
+            "title": "Matrix metric",
+            "description": "Which binary metric colours the grid. The two weighted totals are always available; the five raw metrics behind them need the model to have been mined with \"Keep per-metric values\" enabled.",
+            "enum": [
+              "weightedSignificance",
+              "weightedCorrelation",
+              "frequencyBinary",
+              "distanceBinary",
+              "proximity",
+              "endpoint",
+              "originator"
+            ],
+            "default": "weightedSignificance",
+            "cheap": true
+          },
+          "rowMetric": {
+            "type": "string",
+            "title": "Row metric",
+            "description": "The unary (per-activity) metric shown as a bar in the row gutter, next to each activity's name.",
+            "enum": [
+              "nodeSignificance",
+              "frequencyUnary",
+              "routingUnary"
+            ],
+            "default": "nodeSignificance",
+            "cheap": true
+          },
+          "sort": {
+            "type": "string",
+            "title": "Sort activities",
+            "description": "The order activities appear in on both axes.",
+            "enum": [
+              "significance",
+              "alphabetical"
+            ],
+            "default": "significance",
+            "cheap": true
+          },
+          "cellSize": {
+            "type": "integer",
+            "title": "Cell size",
+            "description": "Pixel size of one matrix cell.",
+            "default": 18,
+            "minimum": 8,
+            "maximum": 36,
+            "cheap": true
+          }
+        }
+      }
+    }
+  ],
+  "consumes": [
+    "TraditionalEventLog",
+    "FuzzyModel"
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "Günther, C.W., van der Aalst, W.M.P. (2007). Fuzzy Mining – Adaptive Process Simplification Based on Multi-Perspective Metrics. In: Business Process Management (BPM 2007), LNCS 4714, pp. 328–343.",
+    "bibtex": "@inproceedings{gunther2007fuzzy,\n  title     = {Fuzzy Mining -- Adaptive Process Simplification Based on Multi-Perspective Metrics},\n  author    = {G{\\\"u}nther, Christian W. and van der Aalst, Wil M. P.},\n  booktitle = {Business Process Management (BPM 2007)},\n  series    = {Lecture Notes in Computer Science},\n  volume    = {4714},\n  pages     = {328--343},\n  year      = {2007},\n  publisher = {Springer}\n}"
+  },
+  "keywords": [
+    "discovery",
+    "fuzzy-miner",
+    "simplification",
+    "spaghetti",
+    "react-flow",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

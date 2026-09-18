@@ -1,0 +1,29 @@
+# Rust build cache — regenerate via `cargo build` / each plugin's package.sh.
+target/
+
+# Node
+node_modules/
+
+# Build output — regenerate via each plugin's package.sh.
+dist/
+build/
+pkg/
+
+# Python
+__pycache__/
+*.pyc
+
+# Left behind by ad-hoc local rebuild scripts.
+.build.log
+
+.DS_Store
+
+# Screenshots dropped by the headless view-verification harness.
+**/view-src/shots/
+
+# Third-party papers are cited by DOI in a plugin's README, never vendored.
+*.pdf
+
+# Never.
+.env
+.env.*

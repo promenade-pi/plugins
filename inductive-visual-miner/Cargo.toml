@@ -1,0 +1,25 @@
+[package]
+name = "promenade-inductive-visual-miner"
+version = "0.3.3"
+edition = "2021"
+license = "MIT"
+description = "Exact alignment-backed token replay for Promenade's Inductive Visual Miner"
+repository = "https://github.com/promworkbench/InductiveVisualMiner"
+
+[lib]
+name = "ivm_alignment"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Must match the locally available wasm-bindgen CLI. Keeping this exact also
+# makes a reproducible offline plugin build possible.
+wasm-bindgen = "=0.2.127"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+serde_json = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

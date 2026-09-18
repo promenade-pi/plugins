@@ -1,0 +1,6 @@
+{
+  "name": "@promenade/synchronization-lens",
+  "private": true,
+  "type": "module",
+  "scripts": { "check": "node --check plugin.js", "package": "./package.sh" }
+}

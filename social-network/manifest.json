@@ -1,0 +1,366 @@
+{
+  "manifestVersion": 1,
+  "id": "org.promenade.social-network",
+  "name": "Social Network Mining",
+  "version": "0.2.0",
+  "author": "Promenade Team",
+  "license": "MIT",
+  "description": "Derives the organisation from the log: who hands work to whom, who subcontracts, who works together, who does the same kind of work. One weighted network over resources, five ways of measuring the relation.",
+  "runtime": "wasm",
+  "entry": "promenade_social_network.js",
+  "wasm": "promenade_social_network_bg.wasm",
+  "artifactTypes": [
+    {
+      "id": "SocialNetwork",
+      "label": "Social Network",
+      "shortLabel": "SNA",
+      "family": "model"
+    }
+  ],
+  "actions": [
+    {
+      "id": "org.promenade.social-network.discover",
+      "label": "Social Network",
+      "description": "Builds a weighted network over the log's resources from how work moves between them inside a case — handover, subcontracting, working together, or reassignment.",
+      "agent": {
+        "whenToUse": "The organisational perspective: how work actually routes between people, as opposed to the org chart. Handover of work is the usual starting point; switch `metric` for the other three relations, which all produce the same artifact type and view.",
+        "notFor": "A log with no resource attribute — the action is not offered there at all. It says nothing about control flow: for that, discover a model. For grouping people by the work they do rather than by who they pass it to, use the Similar Task action instead.",
+        "examples": [
+          "Mine the handover-of-work network for this log",
+          "metric workingTogether to see which people share cases",
+          "maxDistance 2 so a handover survives one automated step in between",
+          "multipleTransfers true to weight a pair by how often they transfer, not by how many cases they share"
+        ]
+      },
+      "memory": "medium",
+      "kernel": {
+        "class": "SocialScanKernel",
+        "abi": "scan-finalize/1",
+        "scan": {
+          "order": "timestamp",
+          "resource": true
+        }
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log",
+          "requires": [
+            "event.resource"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "network",
+          "type": "SocialNetwork"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "type": "string",
+            "title": "Relation",
+            "description": "Which relation between two people the weights measure.",
+            "enum": [
+              "handover",
+              "subcontracting",
+              "workingTogether",
+              "reassignment"
+            ],
+            "enumLabels": [
+              "Handover of work",
+              "Subcontracting",
+              "Working together",
+              "Reassignment"
+            ],
+            "default": "handover",
+            "primary": true
+          },
+          "maxDistance": {
+            "type": "integer",
+            "title": "Succession distance",
+            "description": "1 counts only work passed directly from one person to the next. Higher lets a transfer survive intervening steps — an automated task between two people, say — discounted by the decay below.",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 10,
+            "showWhen": {
+              "param": "metric",
+              "oneOf": [
+                "handover",
+                "subcontracting"
+              ]
+            }
+          },
+          "beta": {
+            "type": "number",
+            "title": "Distance decay",
+            "description": "How much a transfer is discounted per intervening step. 1 treats a distant transfer as fully as a direct one; 0 ignores everything but direct succession.",
+            "default": 0.5,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "showWhen": [
+              {
+                "param": "metric",
+                "oneOf": [
+                  "handover",
+                  "subcontracting"
+                ]
+              },
+              {
+                "param": "maxDistance",
+                "notEquals": 1
+              }
+            ]
+          },
+          "multipleTransfers": {
+            "type": "boolean",
+            "title": "Count every transfer in a case",
+            "description": "Off, a pair counts once per case however often they transfer in it — so the weight is how many cases they collaborate on. On, it is how much they collaborate, which lets one long case dominate.",
+            "default": false,
+            "showWhen": {
+              "param": "metric",
+              "oneOf": [
+                "handover",
+                "subcontracting",
+                "reassignment"
+              ]
+            }
+          },
+          "ignoreSelfLoops": {
+            "type": "boolean",
+            "title": "Ignore work handed to oneself",
+            "description": "A person following their own step is usually continuing work rather than transferring it. Turn off to see how much of the process each person carries alone.",
+            "default": true,
+            "showWhen": {
+              "param": "metric",
+              "oneOf": [
+                "handover",
+                "subcontracting",
+                "reassignment"
+              ]
+            }
+          },
+          "minWeight": {
+            "type": "number",
+            "title": "Minimum edge weight",
+            "description": "Drops edges below this weight. The single most useful control on a real log: an organisation of fifty people has a nearly complete graph until the rare pairs are cut.",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.001,
+            "cheap": false
+          },
+          "maxResources": {
+            "type": "integer",
+            "title": "Resource limit",
+            "description": "Keeps this many people, most active first. The rest are dropped from the network entirely — their events are then treated like events with no resource at all, and the count is reported.",
+            "default": 200,
+            "minimum": 2,
+            "maximum": 4096
+          }
+        },
+        "required": [
+          "metric"
+        ]
+      }
+    },
+    {
+      "id": "org.promenade.social-network.similar-task",
+      "label": "Social Network (similar task)",
+      "description": "Builds a weighted network over the log's resources from how alike their work is — each person's activity profile compared with every other's. Two people who never share a case can still be strongly related.",
+      "agent": {
+        "whenToUse": "Finding roles rather than routes: it groups people who do the same kind of work, which is what an organisational model is built from. The only metric here that relates two resources who never appear in the same case.",
+        "notFor": "Anything about how work moves — it ignores case membership and order entirely. Use the other action's handover or working-together for that.",
+        "examples": [
+          "Which people in this log do the same kind of work?",
+          "similarity cosine to compare work mixes without centring them",
+          "minWeight 0.8 to keep only the clear role groups"
+        ]
+      },
+      "memory": "medium",
+      "kernel": {
+        "class": "SimilarTaskKernel",
+        "abi": "scan-finalize/1",
+        "scan": {
+          "order": "timestamp",
+          "resource": true
+        }
+      },
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log",
+          "requires": [
+            "event.resource"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "network",
+          "type": "SocialNetwork"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "similarity": {
+            "type": "string",
+            "title": "Similarity",
+            "description": "How two activity profiles are compared. Pearson and cosine both measure the shape of someone's work, so a person doing a tenth as much of the same mix still scores high; Euclidean treats sheer volume as a difference.",
+            "enum": [
+              "pearson",
+              "cosine",
+              "euclidean"
+            ],
+            "enumLabels": [
+              "Pearson correlation",
+              "Cosine",
+              "Euclidean distance"
+            ],
+            "default": "pearson",
+            "primary": true
+          },
+          "minWeight": {
+            "type": "number",
+            "title": "Minimum similarity",
+            "description": "Drops pairs below this. Similarity is dense by construction — every pair of people has a score — so this is what turns it into a readable graph.",
+            "default": 0.5,
+            "minimum": -1,
+            "maximum": 1,
+            "multipleOf": 0.01
+          },
+          "maxResources": {
+            "type": "integer",
+            "title": "Resource limit",
+            "description": "Keeps this many people, most active first.",
+            "default": 200,
+            "minimum": 2,
+            "maximum": 4096
+          }
+        },
+        "required": [
+          "similarity"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "org.promenade.social-network.graph",
+      "label": "Social network",
+      "kind": "sandboxed",
+      "entry": "view/plugin.js",
+      "appliesTo": [
+        "SocialNetwork"
+      ],
+      "primary": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "type": "string",
+            "title": "Layout",
+            "enum": [
+              "stress",
+              "force",
+              "circle"
+            ],
+            "enumLabels": [
+              "Stress",
+              "Force",
+              "Circle"
+            ],
+            "default": "stress",
+            "cheap": true
+          },
+          "edgeShare": {
+            "type": "number",
+            "title": "Edges shown",
+            "description": "Keeps the strongest edges up to this share of the total weight.",
+            "default": 1,
+            "minimum": 0.05,
+            "maximum": 1,
+            "multipleOf": 0.05,
+            "cheap": true
+          },
+          "labels": {
+            "type": "boolean",
+            "title": "Show names",
+            "default": true,
+            "cheap": true
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "id": "org.promenade.social-network.matrix",
+      "label": "Social matrix",
+      "kind": "sandboxed",
+      "entry": "view/matrix.js",
+      "appliesTo": [
+        "SocialNetwork"
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "string",
+            "title": "Order",
+            "enum": [
+              "weight",
+              "name",
+              "events"
+            ],
+            "enumLabels": [
+              "By involvement",
+              "By name",
+              "By events"
+            ],
+            "default": "weight",
+            "cheap": true
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "van der Aalst, W.M.P., Reijers, H.A., Song, M. (2005). Discovering Social Networks from Event Logs. Computer Supported Cooperative Work, 14(6), 549-593.",
+    "doi": "10.1007/s10606-005-9005-9",
+    "bibtex": "@article{vanderaalst2005social,\n  title   = {Discovering Social Networks from Event Logs},\n  author  = {van der Aalst, Wil M. P. and Reijers, Hajo A. and Song, Minseok},\n  journal = {Computer Supported Cooperative Work},\n  volume  = {14}, number = {6}, pages = {549--593}, year = {2005},\n  doi     = {10.1007/s10606-005-9005-9}\n}"
+  },
+  "homepage": "https://github.com/promenade-lab/social-network",
+  "repository": "https://github.com/promenade-lab/social-network",
+  "keywords": [
+    "organizational-mining",
+    "social-network",
+    "handover-of-work",
+    "resource",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/metrics.md",
+      "title": "Metrics"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

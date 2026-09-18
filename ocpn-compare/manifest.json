@@ -1,0 +1,116 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.ocpn-compare",
+  "name": "OCPN Comparison",
+  "version": "0.1.1",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Compares two Object-Centric Petri Nets per object type. It reports τ-abstracted directly-follows and reachability footprints, shared activities, variable-arc differences, and reciprocal bounded behavioral coverage. The result is an auditable comparison report, not a picture-only diff.",
+  "runtime": "pyodide",
+  "entry": "plugin.py",
+  "pythonDeps": [
+    "pyarrow"
+  ],
+  "artifactTypes": [
+    {
+      "id": "OcpnComparison",
+      "label": "OCPN Comparison",
+      "shortLabel": "OCPN Δ",
+      "family": "result"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.ocpn-compare.compare",
+      "label": "Compare OCPNs",
+      "memory": "low",
+      "inputs": [
+        {
+          "name": "baseline",
+          "type": "ObjectCentricPetriNet",
+          "required": true,
+          "label": "a baseline Object-Centric Petri Net"
+        },
+        {
+          "name": "candidate",
+          "type": "ObjectCentricPetriNet",
+          "required": true,
+          "label": "a candidate Object-Centric Petri Net"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "comparison",
+          "type": "OcpnComparison"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "maxVariantLength": {
+            "type": "integer",
+            "title": "Bounded variant length",
+            "description": "Maximum visible-activity length enumerated for reciprocal behavioral coverage. This bounds graph-walk exploration; it is not an exact Petri-net alignment.",
+            "default": 8,
+            "minimum": 1,
+            "maximum": 16
+          },
+          "maxVariants": {
+            "type": "integer",
+            "title": "Maximum variants",
+            "description": "Safety cap per object type while enumerating τ-abstracted visible variants.",
+            "default": 2000,
+            "minimum": 100,
+            "maximum": 10000,
+            "multipleOf": 100
+          }
+        },
+        "required": [
+          "maxVariantLength",
+          "maxVariants"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.ocpn-compare.report",
+      "label": "OCPN comparison",
+      "kind": "sandboxed",
+      "entry": "view.js",
+      "appliesTo": [
+        "OcpnComparison"
+      ]
+    }
+  ],
+  "consumes": [
+    "ObjectCentricPetriNet",
+    "OcpnComparison"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "The report combines behavioral-profile ideas (Weidlich, Polyvyanyy, Mendling and Weske, 2011) with OCPN-aware conformance concepts (Gianola, Montali and Winkler, 2023).",
+    "url": "https://arxiv.org/abs/2312.08537"
+  },
+  "keywords": [
+    "comparison",
+    "object-centric",
+    "petri-net",
+    "behavioral-profile",
+    "conformance"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

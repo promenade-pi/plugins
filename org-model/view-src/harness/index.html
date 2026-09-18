@@ -1,0 +1,89 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Organizational model view harness</title>
+<style>
+  html, body { margin: 0; height: 100%; }
+  #root { height: 100%; }
+  #bar { position: fixed; right: 8px; top: 8px; z-index: 9; font: 12px system-ui; color: #697386; }
+</style>
+<div id="bar"><span id="status"></span></div>
+<div id="root"></div>
+<script>
+  // Three clear groups plus one person nobody is close to, which is the shape
+  // that exercises every branch: a named role, a loose role, and a singleton.
+  const PEOPLE = ['ann','bob','cara','dan','eve','finn','gus','hana','ivo','jo','kim','zoe'];
+  const ACTS = ['Review','Approve','File','Escalate','Call'];
+  const GROUPS = [[0,1,2,3],[4,5,6],[7,8,9,10],[11]];
+  const PROFILE = [[0,1],[1,2],[2,3],[4]];
+
+  let seed = 11;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+
+  const roles = GROUPS.map((members, g) => {
+    const acts = PROFILE[g];
+    const profile = acts.map((a, i) => [a, (acts.length - i) / ((acts.length * (acts.length + 1)) / 2)]);
+    return {
+      id: g,
+      label: acts.map((a) => ACTS[a]).join(', '),
+      members, size: members.length,
+      events: members.length * 120, cases: members.length * 40,
+      profile,
+      cohesion: g === 2 ? 0.34 : 0.82,
+      separation: g === 2 ? 0.41 : 0.12,
+    };
+  });
+  const roleOf = [];
+  GROUPS.forEach((members, g) => members.forEach((m) => { roleOf[m] = g; }));
+
+  // A merge sequence consistent with those groups: tight joins inside each
+  // group first, then the groups, then the loner last.
+  const merges = [];
+  let next = PEOPLE.length;
+  let d = 0.05;
+  const live = [];
+  for (const members of GROUPS) {
+    let cur = members[0];
+    for (let i = 1; i < members.length; i++) {
+      merges.push({ a: cur, b: members[i], distance: d, size: i + 1 });
+      cur = next++; d += 0.03;
+    }
+    live.push(cur);
+  }
+  d = 0.55;
+  let acc = live[0];
+  for (let i = 1; i < live.length; i++) {
+    merges.push({ a: acc, b: live[i], distance: d, size: 0 });
+    acc = next++; d += 0.15;
+  }
+
+  const payload = {
+    sourceMetric: 'similarTask:pearson', grouping: 'roles',
+    method: 'agglomerative', linkage: 'average', cutBy: 'count', cut: 4,
+    resources: PEOPLE, activities: ACTS, roles, roleOf, merges,
+    stats: {
+      resources: PEOPLE.length, roles: roles.length, singletons: 1, largestRole: 4,
+      meanSilhouette: 0.41, meanCohesion: 0.7, sparsity: 0.35,
+    },
+  };
+
+  const listeners = {};
+  window.promenade = {
+    artifact: () => ({ id: 'harness', name: 'Harness model', type: 'OrganizationalModel', tables: {}, value: payload }),
+    theme: () => ({ bg: '#fff', text: '#1c2027', 'text-dim': '#697386', border: '#e3e6ea', accent: '#0072B2', warn: '#c80', danger: '#d33' }),
+    color: () => '#7a8699',
+    select: () => {},
+    setParams: () => {},
+    sql: async () => ({ numRows: 0, columns: {} }),
+    on: (ev, fn) => { (listeners[ev] ||= []).push(fn); },
+    ready: () => { document.getElementById('status').textContent = 'ready'; },
+  };
+  window.__harness = {
+    payload,
+    params: (p) => (listeners.params || []).forEach((fn) => fn(p)),
+    resize: (w, h) => (listeners.resize || []).forEach((fn) => fn({ w, h })),
+  };
+
+  const s = document.createElement('script');
+  s.src = 'plugin.js';
+  document.body.appendChild(s);
+</script>

@@ -1,0 +1,126 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.inductive-miner",
+  "name": "Inductive Miner",
+  "version": "0.1.2",
+  "license": "MIT",
+  "description": "Leemans' Inductive Miner (IM and IMf) in Rust: recursively cuts the directly-follows graph into a block-structured process tree. Unlike Alpha or Heuristics Miner it always returns a sound model, and IMf tolerates infrequent behavior without giving that up.",
+  "runtime": "wasm",
+  "entry": "promenade_inductive_miner.js",
+  "wasm": "promenade_inductive_miner_bg.wasm",
+  "actions": [
+    {
+      "id": "run.promenade.inductive-miner.discover",
+      "label": "Inductive Miner",
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "processTree",
+          "type": "ProcessTree"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "variant": {
+            "type": "string",
+            "title": "Variant",
+            "description": "IM guarantees the model can replay every trace in the log. IMf gives that up in exchange for ignoring infrequent behavior, and is the usual choice on a real log.",
+            "enum": [
+              "IMf",
+              "IM"
+            ],
+            "default": "IMf"
+          },
+          "noiseThreshold": {
+            "type": "number",
+            "title": "Noise threshold",
+            "description": "IMf only. How weak a path has to be, relative to the strongest alternative leaving the same activity, before it is treated as noise. At 0 nothing is filtered and IMf equals IM; at 1 only the strongest path out of each activity survives. Filtering is a fallback — it is applied only where the unfiltered log yields no cut. Re-running is not instant, so this is not a live slider.",
+            "default": 0.2,
+            "minimum": 0,
+            "maximum": 1,
+            "multipleOf": 0.01,
+            "primary": true
+          },
+          "maxActivities": {
+            "type": "integer",
+            "title": "Distinct activities",
+            "description": "This is not an event limit. Every event is read, however many there are — a 561,000-event log takes well under a second, because events are collapsed into repeated trace patterns before the algorithm runs. What this caps is the number of distinct activity labels, keeping the most frequent. It is a safety ceiling for pathological logs rather than a modeling choice: dropping an activity can remove a whole branch, and a run that hits the ceiling reports how many it lost. A large real log has a few hundred distinct activities. Cost grows with distinct activities, and with how little structure the log has — not with the number of events.",
+            "default": 2000,
+            "minimum": 2,
+            "maximum": 10000
+          }
+        },
+        "required": [
+          "variant",
+          "noiseThreshold"
+        ]
+      }
+    }
+  ],
+  "kernel": {
+    "class": "InductiveScan",
+    "abi": "scan-finalize/1",
+    "scan": {
+      "order": "log",
+      "includeEmptyTraces": true,
+      "activityIds": "firstAppearance"
+    }
+  },
+  "recommends": [
+    {
+      "id": "run.promenade.process-tree-view",
+      "reason": "draws the process trees this plugin produces"
+    }
+  ],
+  "authors": [
+    {
+      "name": "Promenade Team"
+    }
+  ],
+  "citation": {
+    "text": "Leemans, S.J.J., Fahland, D., van der Aalst, W.M.P. (2013). Discovering Block-Structured Process Models from Event Logs — A Constructive Approach. Petri Nets 2013, LNCS 7927, 311–329. Infrequent-behavior variant: Leemans, Fahland, van der Aalst (2014), BPM Workshops 2013, LNBIP 171, 66–78.",
+    "doi": "10.1007/978-3-642-38697-8_17",
+    "bibtex": "@inproceedings{leemans2013inductive,\n  title     = {Discovering Block-Structured Process Models from Event Logs -- A Constructive Approach},\n  author    = {Leemans, Sander J. J. and Fahland, Dirk and van der Aalst, Wil M. P.},\n  booktitle = {Application and Theory of Petri Nets and Concurrency (Petri Nets 2013)},\n  series    = {LNCS},\n  volume    = {7927},\n  pages     = {311--329},\n  year      = {2013},\n  doi       = {10.1007/978-3-642-38697-8_17}\n}\n\n@inproceedings{leemans2014infrequent,\n  title     = {Discovering Block-Structured Process Models from Event Logs Containing Infrequent Behaviour},\n  author    = {Leemans, Sander J. J. and Fahland, Dirk and van der Aalst, Wil M. P.},\n  booktitle = {Business Process Management Workshops 2013},\n  series    = {LNBIP},\n  volume    = {171},\n  pages     = {66--78},\n  year      = {2014},\n  doi       = {10.1007/978-3-319-06257-0_6}\n}"
+  },
+  "homepage": "https://github.com/promenade-lab/inductive-miner",
+  "repository": "https://github.com/promenade-lab/inductive-miner",
+  "keywords": [
+    "discovery",
+    "process-tree",
+    "inductive-miner",
+    "rust"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "docs/algorithm.md",
+      "title": "Algorithm"
+    },
+    {
+      "path": "docs/prom-reference.md",
+      "title": "ProM reference"
+    },
+    {
+      "path": "docs/implementation-report.md",
+      "title": "Implementation report"
+    },
+    {
+      "path": "docs/licensing.md",
+      "title": "Licensing"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "author": "Promenade Team"
+}

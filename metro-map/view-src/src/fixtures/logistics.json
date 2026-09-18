@@ -1,0 +1,1694 @@
+{
+  "basis": "directlyFollows",
+  "objectTypes": [
+    "Container",
+    "Customer Order",
+    "Forklift",
+    "Handling Unit",
+    "Transport Document",
+    "Truck",
+    "Vehicle"
+  ],
+  "nodes": [
+    {
+      "kind": "source",
+      "id": "source:Customer Order",
+      "objectType": "Customer Order",
+      "rank": 0,
+      "lane": 3.4760227000306827
+    },
+    {
+      "kind": "source",
+      "id": "source:Handling Unit",
+      "objectType": "Handling Unit",
+      "rank": 0,
+      "lane": 2.4760227000306827
+    },
+    {
+      "kind": "source",
+      "id": "source:Transport Document",
+      "objectType": "Transport Document",
+      "rank": 1,
+      "lane": 4.476022700030683
+    },
+    {
+      "kind": "station",
+      "id": "station:Collect Goods",
+      "activity": "Collect Goods",
+      "objectTypes": [
+        "Handling Unit"
+      ],
+      "rank": 1,
+      "lane": 2.4760227000306827,
+      "meta": {
+        "frequency": 10553
+      }
+    },
+    {
+      "kind": "station",
+      "id": "station:Register Customer Order",
+      "activity": "Register Customer Order",
+      "objectTypes": [
+        "Customer Order"
+      ],
+      "rank": 1,
+      "lane": 3.4760227000306827,
+      "meta": {
+        "frequency": 600
+      }
+    },
+    {
+      "kind": "source",
+      "id": "source:Vehicle",
+      "objectType": "Vehicle",
+      "rank": 2,
+      "lane": 5.254306924169498
+    },
+    {
+      "kind": "station",
+      "id": "station:Create Transport Document",
+      "activity": "Create Transport Document",
+      "objectTypes": [
+        "Customer Order",
+        "Transport Document"
+      ],
+      "rank": 2,
+      "lane": 4.254306924169498,
+      "meta": {
+        "frequency": 1188
+      }
+    },
+    {
+      "kind": "gateway",
+      "id": "gateway:boundary-split:sink:Customer Order",
+      "gatewayType": "xor",
+      "direction": "join",
+      "objectType": "Customer Order",
+      "rank": 3,
+      "lane": 1.4760233055886018
+    },
+    {
+      "kind": "source",
+      "id": "source:Container",
+      "objectType": "Container",
+      "rank": 3,
+      "lane": 4.081581224869922
+    },
+    {
+      "kind": "station",
+      "id": "station:Book Vehicles",
+      "activity": "Book Vehicles",
+      "objectTypes": [
+        "Transport Document",
+        "Vehicle"
+      ],
+      "rank": 3,
+      "lane": 5.081581224869922,
+      "meta": {
+        "frequency": 721
+      }
+    },
+    {
+      "kind": "sink",
+      "id": "sink:Customer Order",
+      "objectType": "Customer Order",
+      "rank": 4,
+      "lane": 0.4806549601577479
+    },
+    {
+      "kind": "station",
+      "id": "station:Order Empty Containers",
+      "activity": "Order Empty Containers",
+      "objectTypes": [
+        "Container",
+        "Transport Document"
+      ],
+      "rank": 4,
+      "lane": 3.480654960157748,
+      "meta": {
+        "frequency": 2592
+      }
+    },
+    {
+      "kind": "source",
+      "id": "source:Truck",
+      "objectType": "Truck",
+      "rank": 5,
+      "lane": 3.8620583060625
+    },
+    {
+      "kind": "station",
+      "id": "station:Pick Up Empty Container",
+      "activity": "Pick Up Empty Container",
+      "objectTypes": [
+        "Container"
+      ],
+      "rank": 5,
+      "lane": 0.8620583060625002,
+      "meta": {
+        "frequency": 1995
+      }
+    },
+    {
+      "kind": "station",
+      "id": "station:Load Truck",
+      "activity": "Load Truck",
+      "objectTypes": [
+        "Container",
+        "Handling Unit",
+        "Truck"
+      ],
+      "rank": 6,
+      "lane": 3.4773065535694396,
+      "meta": {
+        "frequency": 12553
+      }
+    },
+    {
+      "kind": "sink",
+      "id": "sink:Handling Unit",
+      "objectType": "Handling Unit",
+      "rank": 7,
+      "lane": 5.246783530673636
+    },
+    {
+      "kind": "source",
+      "id": "source:Forklift",
+      "objectType": "Forklift",
+      "rank": 7,
+      "lane": 2.2467835306736363
+    },
+    {
+      "kind": "station",
+      "id": "station:Drive to Terminal",
+      "activity": "Drive to Terminal",
+      "objectTypes": [
+        "Container",
+        "Truck"
+      ],
+      "rank": 7,
+      "lane": 3.2467835306736363,
+      "meta": {
+        "frequency": 1995
+      }
+    },
+    {
+      "kind": "gateway",
+      "id": "gateway:boundary-split:sink:Truck",
+      "gatewayType": "xor",
+      "direction": "join",
+      "objectType": "Truck",
+      "rank": 8,
+      "lane": 4.316087020706594
+    },
+    {
+      "kind": "station",
+      "id": "station:Weigh",
+      "activity": "Weigh",
+      "objectTypes": [
+        "Container",
+        "Forklift"
+      ],
+      "rank": 8,
+      "lane": 3.3160870207065942,
+      "meta": {
+        "frequency": 1992
+      }
+    },
+    {
+      "kind": "sink",
+      "id": "sink:Truck",
+      "objectType": "Truck",
+      "rank": 9,
+      "lane": 5.937866328961414
+    },
+    {
+      "kind": "station",
+      "id": "station:Place in Stock",
+      "activity": "Place in Stock",
+      "objectTypes": [
+        "Container",
+        "Forklift"
+      ],
+      "rank": 9,
+      "lane": 0.9378663289614142,
+      "meta": {
+        "frequency": 1817
+      }
+    },
+    {
+      "kind": "station",
+      "id": "station:Bring to Loading Bay",
+      "activity": "Bring to Loading Bay",
+      "objectTypes": [
+        "Container",
+        "Forklift"
+      ],
+      "rank": 10,
+      "lane": 4.543364602336476,
+      "meta": {
+        "frequency": 1972
+      }
+    },
+    {
+      "kind": "station",
+      "id": "station:Reschedule Container",
+      "activity": "Reschedule Container",
+      "objectTypes": [
+        "Container",
+        "Transport Document",
+        "Vehicle"
+      ],
+      "rank": 11,
+      "lane": 10.151456126937283,
+      "meta": {
+        "frequency": 86
+      }
+    },
+    {
+      "kind": "station",
+      "id": "station:Load to Vehicle",
+      "activity": "Load to Vehicle",
+      "objectTypes": [
+        "Container",
+        "Forklift",
+        "Vehicle"
+      ],
+      "rank": 12,
+      "lane": 6.069307997959959,
+      "meta": {
+        "frequency": 2096
+      }
+    },
+    {
+      "kind": "gateway",
+      "id": "gateway:boundary-split:sink:Forklift",
+      "gatewayType": "xor",
+      "direction": "join",
+      "objectType": "Forklift",
+      "rank": 13,
+      "lane": 9.292946025735215
+    },
+    {
+      "kind": "station",
+      "id": "station:Depart",
+      "activity": "Depart",
+      "objectTypes": [
+        "Container",
+        "Transport Document",
+        "Vehicle"
+      ],
+      "rank": 13,
+      "lane": 8.292946025735215,
+      "meta": {
+        "frequency": 2656
+      }
+    },
+    {
+      "kind": "gateway",
+      "id": "gateway:boundary-split:sink:Container",
+      "gatewayType": "xor",
+      "direction": "join",
+      "objectType": "Container",
+      "rank": 14,
+      "lane": 1.4054461622030203
+    },
+    {
+      "kind": "gateway",
+      "id": "gateway:boundary-split:sink:Transport Document",
+      "gatewayType": "xor",
+      "direction": "join",
+      "objectType": "Transport Document",
+      "rank": 14,
+      "lane": 6.0304461622029635
+    },
+    {
+      "kind": "sink",
+      "id": "sink:Forklift",
+      "objectType": "Forklift",
+      "rank": 14,
+      "lane": 8.570526624026343
+    },
+    {
+      "kind": "sink",
+      "id": "sink:Vehicle",
+      "objectType": "Vehicle",
+      "rank": 14,
+      "lane": 7.570526624026343
+    },
+    {
+      "kind": "sink",
+      "id": "sink:Container",
+      "objectType": "Container",
+      "rank": 15,
+      "lane": 1.3653657003795843
+    },
+    {
+      "kind": "sink",
+      "id": "sink:Transport Document",
+      "objectType": "Transport Document",
+      "rank": 15,
+      "lane": 5.990365700379584
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:Container:gateway:boundary-split:sink:Container:sink:Container",
+      "source": "gateway:boundary-split:sink:Container",
+      "target": "sink:Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0
+    },
+    {
+      "id": "edge:Container:source:Container:station:Order Empty Containers",
+      "source": "source:Container",
+      "target": "station:Order Empty Containers",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "frequency": 1999
+    },
+    {
+      "id": "edge:Container:station:Bring to Loading Bay:gateway:boundary-split:sink:Container",
+      "source": "station:Bring to Loading Bay",
+      "target": "gateway:boundary-split:sink:Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "waypoints": [
+        {
+          "rank": 11,
+          "lane": 2.1514561269372834
+        },
+        {
+          "rank": 12,
+          "lane": 3.0693079979599593
+        },
+        {
+          "rank": 13,
+          "lane": 2.292946025735216
+        }
+      ]
+    },
+    {
+      "id": "edge:Container:station:Bring to Loading Bay:station:Load to Vehicle",
+      "source": "station:Bring to Loading Bay",
+      "target": "station:Load to Vehicle",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "waypoints": [
+        {
+          "rank": 11,
+          "lane": 4.151456126937283
+        }
+      ],
+      "frequency": 1931,
+      "durationSecs": 2428.910926980839
+    },
+    {
+      "id": "edge:Container:station:Bring to Loading Bay:station:Reschedule Container",
+      "source": "station:Bring to Loading Bay",
+      "target": "station:Reschedule Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "frequency": 36,
+      "durationSecs": 7110.055555555556
+    },
+    {
+      "id": "edge:Container:station:Depart:gateway:boundary-split:sink:Container",
+      "source": "station:Depart",
+      "target": "gateway:boundary-split:sink:Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0
+    },
+    {
+      "id": "edge:Container:station:Drive to Terminal:station:Weigh",
+      "source": "station:Drive to Terminal",
+      "target": "station:Weigh",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "frequency": 1989,
+      "durationSecs": 2559.5359477124184
+    },
+    {
+      "id": "edge:Container:station:Load Truck:gateway:boundary-split:sink:Container",
+      "source": "station:Load Truck",
+      "target": "gateway:boundary-split:sink:Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "waypoints": [
+        {
+          "rank": 7,
+          "lane": 0.24678353067363634
+        },
+        {
+          "rank": 8,
+          "lane": -0.6839129792934058
+        },
+        {
+          "rank": 9,
+          "lane": -4.062133671038586
+        },
+        {
+          "rank": 10,
+          "lane": -2.4566353976635233
+        },
+        {
+          "rank": 11,
+          "lane": -3.8485438730627166
+        },
+        {
+          "rank": 12,
+          "lane": -0.9306920020400407
+        },
+        {
+          "rank": 13,
+          "lane": -1.7070539742647841
+        }
+      ]
+    },
+    {
+      "id": "edge:Container:station:Load Truck:station:Drive to Terminal",
+      "source": "station:Load Truck",
+      "target": "station:Drive to Terminal",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "frequency": 1989,
+      "durationSecs": 10999.071392659627
+    },
+    {
+      "id": "edge:Container:station:Load Truck:station:Load Truck",
+      "source": "station:Load Truck",
+      "target": "station:Load Truck",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 0,
+      "frequency": 8559,
+      "durationSecs": 5259.708961327258
+    },
+    {
+      "id": "edge:Container:station:Load to Vehicle:gateway:boundary-split:sink:Container",
+      "source": "station:Load to Vehicle",
+      "target": "gateway:boundary-split:sink:Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "waypoints": [
+        {
+          "rank": 13,
+          "lane": 3.292946025735216
+        }
+      ]
+    },
+    {
+      "id": "edge:Container:station:Load to Vehicle:station:Depart",
+      "source": "station:Load to Vehicle",
+      "target": "station:Depart",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "frequency": 1956,
+      "durationSecs": 89846.6191206544
+    },
+    {
+      "id": "edge:Container:station:Order Empty Containers:gateway:boundary-split:sink:Container",
+      "source": "station:Order Empty Containers",
+      "target": "gateway:boundary-split:sink:Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "waypoints": [
+        {
+          "rank": 5,
+          "lane": -1.1379416939374998
+        },
+        {
+          "rank": 6,
+          "lane": -0.5226934464305604
+        },
+        {
+          "rank": 7,
+          "lane": -2.7532164693263637
+        },
+        {
+          "rank": 8,
+          "lane": -1.6839129792934058
+        },
+        {
+          "rank": 9,
+          "lane": -3.062133671038586
+        },
+        {
+          "rank": 10,
+          "lane": -1.4566353976635233
+        },
+        {
+          "rank": 11,
+          "lane": -2.8485438730627166
+        },
+        {
+          "rank": 12,
+          "lane": 0.06930799795995934
+        },
+        {
+          "rank": 13,
+          "lane": -0.7070539742647841
+        }
+      ]
+    },
+    {
+      "id": "edge:Container:station:Order Empty Containers:station:Pick Up Empty Container",
+      "source": "station:Order Empty Containers",
+      "target": "station:Pick Up Empty Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "frequency": 1995,
+      "durationSecs": 368943.91528822057
+    },
+    {
+      "id": "edge:Container:station:Pick Up Empty Container:gateway:boundary-split:sink:Container",
+      "source": "station:Pick Up Empty Container",
+      "target": "gateway:boundary-split:sink:Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "waypoints": [
+        {
+          "rank": 6,
+          "lane": 0.47730655356943963
+        },
+        {
+          "rank": 7,
+          "lane": -1.7532164693263637
+        },
+        {
+          "rank": 8,
+          "lane": 0.3160870207065942
+        },
+        {
+          "rank": 9,
+          "lane": -2.062133671038586
+        },
+        {
+          "rank": 10,
+          "lane": -0.45663539766352335
+        },
+        {
+          "rank": 11,
+          "lane": -1.8485438730627166
+        },
+        {
+          "rank": 12,
+          "lane": 1.0693079979599593
+        },
+        {
+          "rank": 13,
+          "lane": 0.2929460257352159
+        }
+      ]
+    },
+    {
+      "id": "edge:Container:station:Pick Up Empty Container:station:Load Truck",
+      "source": "station:Pick Up Empty Container",
+      "target": "station:Load Truck",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "frequency": 1994,
+      "durationSecs": 38659.61885656971
+    },
+    {
+      "id": "edge:Container:station:Place in Stock:gateway:boundary-split:sink:Container",
+      "source": "station:Place in Stock",
+      "target": "gateway:boundary-split:sink:Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "waypoints": [
+        {
+          "rank": 10,
+          "lane": 1.5433646023364767
+        },
+        {
+          "rank": 11,
+          "lane": -0.8485438730627166
+        },
+        {
+          "rank": 12,
+          "lane": 2.0693079979599593
+        },
+        {
+          "rank": 13,
+          "lane": 1.2929460257352159
+        }
+      ]
+    },
+    {
+      "id": "edge:Container:station:Place in Stock:station:Bring to Loading Bay",
+      "source": "station:Place in Stock",
+      "target": "station:Bring to Loading Bay",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "frequency": 1794,
+      "durationSecs": 743380.5122630992
+    },
+    {
+      "id": "edge:Container:station:Reschedule Container:gateway:boundary-split:sink:Container",
+      "source": "station:Reschedule Container",
+      "target": "gateway:boundary-split:sink:Container",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "waypoints": [
+        {
+          "rank": 12,
+          "lane": 7.069307997959959
+        },
+        {
+          "rank": 13,
+          "lane": 4.292946025735215
+        }
+      ]
+    },
+    {
+      "id": "edge:Container:station:Reschedule Container:station:Load to Vehicle",
+      "source": "station:Reschedule Container",
+      "target": "station:Load to Vehicle",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "frequency": 35,
+      "durationSecs": 177997.6
+    },
+    {
+      "id": "edge:Container:station:Weigh:station:Bring to Loading Bay",
+      "source": "station:Weigh",
+      "target": "station:Bring to Loading Bay",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "waypoints": [
+        {
+          "rank": 9,
+          "lane": 1.9378663289614142
+        }
+      ],
+      "frequency": 175,
+      "durationSecs": 1157.4114285714286
+    },
+    {
+      "id": "edge:Container:station:Weigh:station:Place in Stock",
+      "source": "station:Weigh",
+      "target": "station:Place in Stock",
+      "objectType": "Container",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 0,
+      "frequency": 1814,
+      "durationSecs": 1960.0926130099228
+    },
+    {
+      "id": "edge:Customer Order:gateway:boundary-split:sink:Customer Order:sink:Customer Order",
+      "source": "gateway:boundary-split:sink:Customer Order",
+      "target": "sink:Customer Order",
+      "objectType": "Customer Order",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 1
+    },
+    {
+      "id": "edge:Customer Order:source:Customer Order:station:Register Customer Order",
+      "source": "source:Customer Order",
+      "target": "station:Register Customer Order",
+      "objectType": "Customer Order",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 1,
+      "frequency": 600
+    },
+    {
+      "id": "edge:Customer Order:station:Create Transport Document:gateway:boundary-split:sink:Customer Order",
+      "source": "station:Create Transport Document",
+      "target": "gateway:boundary-split:sink:Customer Order",
+      "objectType": "Customer Order",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 1
+    },
+    {
+      "id": "edge:Customer Order:station:Register Customer Order:gateway:boundary-split:sink:Customer Order",
+      "source": "station:Register Customer Order",
+      "target": "gateway:boundary-split:sink:Customer Order",
+      "objectType": "Customer Order",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 1,
+      "waypoints": [
+        {
+          "rank": 2,
+          "lane": 1.7788019624503022
+        }
+      ]
+    },
+    {
+      "id": "edge:Customer Order:station:Register Customer Order:station:Create Transport Document",
+      "source": "station:Register Customer Order",
+      "target": "station:Create Transport Document",
+      "objectType": "Customer Order",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 1,
+      "frequency": 594,
+      "durationSecs": 329005.2154882155
+    },
+    {
+      "id": "edge:Forklift:gateway:boundary-split:sink:Forklift:sink:Forklift",
+      "source": "gateway:boundary-split:sink:Forklift",
+      "target": "sink:Forklift",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 2
+    },
+    {
+      "id": "edge:Forklift:source:Forklift:station:Weigh",
+      "source": "source:Forklift",
+      "target": "station:Weigh",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 2,
+      "frequency": 3
+    },
+    {
+      "id": "edge:Forklift:station:Bring to Loading Bay:gateway:boundary-split:sink:Forklift",
+      "source": "station:Bring to Loading Bay",
+      "target": "gateway:boundary-split:sink:Forklift",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 2,
+      "waypoints": [
+        {
+          "rank": 11,
+          "lane": 11.151456126937283
+        },
+        {
+          "rank": 12,
+          "lane": 12.06930799795996
+        }
+      ]
+    },
+    {
+      "id": "edge:Forklift:station:Bring to Loading Bay:station:Bring to Loading Bay",
+      "source": "station:Bring to Loading Bay",
+      "target": "station:Bring to Loading Bay",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 2,
+      "frequency": 4,
+      "durationSecs": 112295
+    },
+    {
+      "id": "edge:Forklift:station:Bring to Loading Bay:station:Load to Vehicle",
+      "source": "station:Bring to Loading Bay",
+      "target": "station:Load to Vehicle",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 2,
+      "waypoints": [
+        {
+          "rank": 11,
+          "lane": 5.151456126937283
+        }
+      ],
+      "frequency": 1933,
+      "durationSecs": 2476.6187273667874
+    },
+    {
+      "id": "edge:Forklift:station:Bring to Loading Bay:station:Weigh",
+      "source": "station:Bring to Loading Bay",
+      "target": "station:Weigh",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 2,
+      "waypoints": [
+        {
+          "rank": 9,
+          "lane": 2.937866328961414
+        }
+      ],
+      "frequency": 30,
+      "durationSecs": 20593.7
+    },
+    {
+      "id": "edge:Forklift:station:Load to Vehicle:gateway:boundary-split:sink:Forklift",
+      "source": "station:Load to Vehicle",
+      "target": "gateway:boundary-split:sink:Forklift",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 2
+    },
+    {
+      "id": "edge:Forklift:station:Load to Vehicle:station:Bring to Loading Bay",
+      "source": "station:Load to Vehicle",
+      "target": "station:Bring to Loading Bay",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 2,
+      "waypoints": [
+        {
+          "rank": 11,
+          "lane": 6.151456126937283
+        }
+      ],
+      "frequency": 1352,
+      "durationSecs": 4434.17973372781
+    },
+    {
+      "id": "edge:Forklift:station:Load to Vehicle:station:Load to Vehicle",
+      "source": "station:Load to Vehicle",
+      "target": "station:Load to Vehicle",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 2,
+      "frequency": 9,
+      "durationSecs": 2306.3333333333335
+    },
+    {
+      "id": "edge:Forklift:station:Load to Vehicle:station:Weigh",
+      "source": "station:Load to Vehicle",
+      "target": "station:Weigh",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 2,
+      "waypoints": [
+        {
+          "rank": 11,
+          "lane": 7.151456126937283
+        },
+        {
+          "rank": 10,
+          "lane": 5.543364602336476
+        },
+        {
+          "rank": 9,
+          "lane": 4.937866328961414
+        }
+      ],
+      "frequency": 604,
+      "durationSecs": 22150.604304635763
+    },
+    {
+      "id": "edge:Forklift:station:Place in Stock:station:Bring to Loading Bay",
+      "source": "station:Place in Stock",
+      "target": "station:Bring to Loading Bay",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 2,
+      "frequency": 438,
+      "durationSecs": 114378.6301369863
+    },
+    {
+      "id": "edge:Forklift:station:Place in Stock:station:Load to Vehicle",
+      "source": "station:Place in Stock",
+      "target": "station:Load to Vehicle",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 2,
+      "waypoints": [
+        {
+          "rank": 10,
+          "lane": 3.5433646023364767
+        },
+        {
+          "rank": 11,
+          "lane": 3.1514561269372834
+        }
+      ],
+      "frequency": 24,
+      "durationSecs": 112038.91666666667
+    },
+    {
+      "id": "edge:Forklift:station:Place in Stock:station:Weigh",
+      "source": "station:Place in Stock",
+      "target": "station:Weigh",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 2,
+      "frequency": 1352,
+      "durationSecs": 26322.792899408283
+    },
+    {
+      "id": "edge:Forklift:station:Weigh:station:Bring to Loading Bay",
+      "source": "station:Weigh",
+      "target": "station:Bring to Loading Bay",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 2,
+      "waypoints": [
+        {
+          "rank": 9,
+          "lane": 3.937866328961414
+        }
+      ],
+      "frequency": 175,
+      "durationSecs": 1157.4114285714286
+    },
+    {
+      "id": "edge:Forklift:station:Weigh:station:Place in Stock",
+      "source": "station:Weigh",
+      "target": "station:Place in Stock",
+      "objectType": "Forklift",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 2,
+      "frequency": 1814,
+      "durationSecs": 1960.0926130099228
+    },
+    {
+      "id": "edge:Handling Unit:source:Handling Unit:station:Collect Goods",
+      "source": "source:Handling Unit",
+      "target": "station:Collect Goods",
+      "objectType": "Handling Unit",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 3,
+      "frequency": 10553
+    },
+    {
+      "id": "edge:Handling Unit:station:Collect Goods:station:Load Truck",
+      "source": "station:Collect Goods",
+      "target": "station:Load Truck",
+      "objectType": "Handling Unit",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 3,
+      "waypoints": [
+        {
+          "rank": 2,
+          "lane": 2.778801962450302
+        },
+        {
+          "rank": 3,
+          "lane": 2.476023305588602
+        },
+        {
+          "rank": 4,
+          "lane": 2.480654960157748
+        },
+        {
+          "rank": 5,
+          "lane": 2.8620583060625
+        }
+      ],
+      "frequency": 10553,
+      "durationSecs": 7820.926750687008
+    },
+    {
+      "id": "edge:Handling Unit:station:Load Truck:sink:Handling Unit",
+      "source": "station:Load Truck",
+      "target": "sink:Handling Unit",
+      "objectType": "Handling Unit",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 3,
+      "frequency": 10553
+    },
+    {
+      "id": "edge:Transport Document:gateway:boundary-split:sink:Transport Document:sink:Transport Document",
+      "source": "gateway:boundary-split:sink:Transport Document",
+      "target": "sink:Transport Document",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4
+    },
+    {
+      "id": "edge:Transport Document:source:Transport Document:station:Create Transport Document",
+      "source": "source:Transport Document",
+      "target": "station:Create Transport Document",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4,
+      "frequency": 594
+    },
+    {
+      "id": "edge:Transport Document:station:Book Vehicles:gateway:boundary-split:sink:Transport Document",
+      "source": "station:Book Vehicles",
+      "target": "gateway:boundary-split:sink:Transport Document",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4,
+      "waypoints": [
+        {
+          "rank": 4,
+          "lane": 1.480654960157748
+        },
+        {
+          "rank": 5,
+          "lane": -0.13794169393749978
+        },
+        {
+          "rank": 6,
+          "lane": 1.4773065535694396
+        },
+        {
+          "rank": 7,
+          "lane": -0.7532164693263637
+        },
+        {
+          "rank": 8,
+          "lane": 1.3160870207065942
+        },
+        {
+          "rank": 9,
+          "lane": -1.0621336710385858
+        },
+        {
+          "rank": 10,
+          "lane": 0.5433646023364767
+        },
+        {
+          "rank": 11,
+          "lane": 0.1514561269372834
+        },
+        {
+          "rank": 12,
+          "lane": 4.069307997959959
+        },
+        {
+          "rank": 13,
+          "lane": 5.292946025735215
+        }
+      ]
+    },
+    {
+      "id": "edge:Transport Document:station:Book Vehicles:station:Order Empty Containers",
+      "source": "station:Book Vehicles",
+      "target": "station:Order Empty Containers",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4,
+      "frequency": 593,
+      "durationSecs": 43935.451939291735
+    },
+    {
+      "id": "edge:Transport Document:station:Create Transport Document:station:Book Vehicles",
+      "source": "station:Create Transport Document",
+      "target": "station:Book Vehicles",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4,
+      "frequency": 594,
+      "durationSecs": 22207.07239057239
+    },
+    {
+      "id": "edge:Transport Document:station:Depart:gateway:boundary-split:sink:Transport Document",
+      "source": "station:Depart",
+      "target": "gateway:boundary-split:sink:Transport Document",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4
+    },
+    {
+      "id": "edge:Transport Document:station:Depart:station:Depart",
+      "source": "station:Depart",
+      "target": "station:Depart",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 4,
+      "frequency": 160,
+      "durationSecs": 1047510
+    },
+    {
+      "id": "edge:Transport Document:station:Depart:station:Reschedule Container",
+      "source": "station:Depart",
+      "target": "station:Reschedule Container",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4,
+      "waypoints": [
+        {
+          "rank": 12,
+          "lane": 9.06930799795996
+        }
+      ],
+      "frequency": 21,
+      "durationSecs": 255614.85714285713
+    },
+    {
+      "id": "edge:Transport Document:station:Order Empty Containers:gateway:boundary-split:sink:Transport Document",
+      "source": "station:Order Empty Containers",
+      "target": "gateway:boundary-split:sink:Transport Document",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4,
+      "waypoints": [
+        {
+          "rank": 5,
+          "lane": 1.8620583060625002
+        },
+        {
+          "rank": 6,
+          "lane": 2.4773065535694396
+        },
+        {
+          "rank": 7,
+          "lane": 1.2467835306736363
+        },
+        {
+          "rank": 8,
+          "lane": 2.3160870207065942
+        },
+        {
+          "rank": 9,
+          "lane": -0.0621336710385858
+        },
+        {
+          "rank": 10,
+          "lane": 2.5433646023364767
+        },
+        {
+          "rank": 11,
+          "lane": 1.1514561269372834
+        },
+        {
+          "rank": 12,
+          "lane": 5.069307997959959
+        },
+        {
+          "rank": 13,
+          "lane": 6.292946025735215
+        }
+      ]
+    },
+    {
+      "id": "edge:Transport Document:station:Order Empty Containers:station:Depart",
+      "source": "station:Order Empty Containers",
+      "target": "station:Depart",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4,
+      "waypoints": [
+        {
+          "rank": 5,
+          "lane": 7.8620583060625
+        },
+        {
+          "rank": 6,
+          "lane": 8.47730655356944
+        },
+        {
+          "rank": 7,
+          "lane": 11.246783530673635
+        },
+        {
+          "rank": 8,
+          "lane": 10.316087020706593
+        },
+        {
+          "rank": 9,
+          "lane": 11.937866328961414
+        },
+        {
+          "rank": 10,
+          "lane": 11.543364602336476
+        },
+        {
+          "rank": 11,
+          "lane": 12.151456126937283
+        },
+        {
+          "rank": 12,
+          "lane": 11.06930799795996
+        }
+      ],
+      "frequency": 561,
+      "durationSecs": 1007066.1568627451
+    },
+    {
+      "id": "edge:Transport Document:station:Order Empty Containers:station:Reschedule Container",
+      "source": "station:Order Empty Containers",
+      "target": "station:Reschedule Container",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4,
+      "waypoints": [
+        {
+          "rank": 5,
+          "lane": 5.8620583060625
+        },
+        {
+          "rank": 6,
+          "lane": 6.47730655356944
+        },
+        {
+          "rank": 7,
+          "lane": 8.246783530673635
+        },
+        {
+          "rank": 8,
+          "lane": 7.316087020706594
+        },
+        {
+          "rank": 9,
+          "lane": 8.937866328961414
+        },
+        {
+          "rank": 10,
+          "lane": 8.543364602336476
+        }
+      ],
+      "frequency": 13,
+      "durationSecs": 298469.3076923077
+    },
+    {
+      "id": "edge:Transport Document:station:Reschedule Container:gateway:boundary-split:sink:Transport Document",
+      "source": "station:Reschedule Container",
+      "target": "gateway:boundary-split:sink:Transport Document",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 4,
+      "waypoints": [
+        {
+          "rank": 12,
+          "lane": 8.06930799795996
+        },
+        {
+          "rank": 13,
+          "lane": 7.292946025735215
+        }
+      ]
+    },
+    {
+      "id": "edge:Transport Document:station:Reschedule Container:station:Depart",
+      "source": "station:Reschedule Container",
+      "target": "station:Depart",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 4,
+      "waypoints": [
+        {
+          "rank": 12,
+          "lane": 10.06930799795996
+        }
+      ],
+      "frequency": 33,
+      "durationSecs": 275189.9696969697
+    },
+    {
+      "id": "edge:Transport Document:station:Reschedule Container:station:Reschedule Container",
+      "source": "station:Reschedule Container",
+      "target": "station:Reschedule Container",
+      "objectType": "Transport Document",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 4,
+      "frequency": 2,
+      "durationSecs": 8635.5
+    },
+    {
+      "id": "edge:Truck:gateway:boundary-split:sink:Truck:sink:Truck",
+      "source": "gateway:boundary-split:sink:Truck",
+      "target": "sink:Truck",
+      "objectType": "Truck",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 5
+    },
+    {
+      "id": "edge:Truck:source:Truck:station:Load Truck",
+      "source": "source:Truck",
+      "target": "station:Load Truck",
+      "objectType": "Truck",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 5,
+      "frequency": 6
+    },
+    {
+      "id": "edge:Truck:station:Drive to Terminal:gateway:boundary-split:sink:Truck",
+      "source": "station:Drive to Terminal",
+      "target": "gateway:boundary-split:sink:Truck",
+      "objectType": "Truck",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 5
+    },
+    {
+      "id": "edge:Truck:station:Drive to Terminal:station:Load Truck",
+      "source": "station:Drive to Terminal",
+      "target": "station:Load Truck",
+      "objectType": "Truck",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 5,
+      "frequency": 1988,
+      "durationSecs": 84119.08853118712
+    },
+    {
+      "id": "edge:Truck:station:Load Truck:gateway:boundary-split:sink:Truck",
+      "source": "station:Load Truck",
+      "target": "gateway:boundary-split:sink:Truck",
+      "objectType": "Truck",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 5,
+      "waypoints": [
+        {
+          "rank": 7,
+          "lane": 4.246783530673636
+        }
+      ]
+    },
+    {
+      "id": "edge:Truck:station:Load Truck:station:Drive to Terminal",
+      "source": "station:Load Truck",
+      "target": "station:Drive to Terminal",
+      "objectType": "Truck",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 5,
+      "frequency": 1989,
+      "durationSecs": 10999.071392659627
+    },
+    {
+      "id": "edge:Truck:station:Load Truck:station:Load Truck",
+      "source": "station:Load Truck",
+      "target": "station:Load Truck",
+      "objectType": "Truck",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 5,
+      "frequency": 8559,
+      "durationSecs": 5259.708961327258
+    },
+    {
+      "id": "edge:Vehicle:source:Vehicle:station:Book Vehicles",
+      "source": "source:Vehicle",
+      "target": "station:Book Vehicles",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 6,
+      "frequency": 127
+    },
+    {
+      "id": "edge:Vehicle:station:Book Vehicles:station:Book Vehicles",
+      "source": "station:Book Vehicles",
+      "target": "station:Book Vehicles",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 6,
+      "frequency": 596,
+      "durationSecs": 291882.182885906
+    },
+    {
+      "id": "edge:Vehicle:station:Book Vehicles:station:Load to Vehicle",
+      "source": "station:Book Vehicles",
+      "target": "station:Load to Vehicle",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 6,
+      "waypoints": [
+        {
+          "rank": 4,
+          "lane": 4.480654960157748
+        },
+        {
+          "rank": 5,
+          "lane": 4.8620583060625
+        },
+        {
+          "rank": 6,
+          "lane": 4.47730655356944
+        },
+        {
+          "rank": 7,
+          "lane": 6.246783530673636
+        },
+        {
+          "rank": 8,
+          "lane": 5.316087020706594
+        },
+        {
+          "rank": 9,
+          "lane": 6.937866328961414
+        },
+        {
+          "rank": 10,
+          "lane": 6.543364602336476
+        },
+        {
+          "rank": 11,
+          "lane": 8.151456126937283
+        }
+      ],
+      "frequency": 122,
+      "durationSecs": 283101.0081967213
+    },
+    {
+      "id": "edge:Vehicle:station:Book Vehicles:station:Reschedule Container",
+      "source": "station:Book Vehicles",
+      "target": "station:Reschedule Container",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 6,
+      "waypoints": [
+        {
+          "rank": 4,
+          "lane": 6.480654960157748
+        },
+        {
+          "rank": 5,
+          "lane": 8.862058306062501
+        },
+        {
+          "rank": 6,
+          "lane": 7.47730655356944
+        },
+        {
+          "rank": 7,
+          "lane": 9.246783530673635
+        },
+        {
+          "rank": 8,
+          "lane": 8.316087020706593
+        },
+        {
+          "rank": 9,
+          "lane": 9.937866328961414
+        },
+        {
+          "rank": 10,
+          "lane": 9.543364602336476
+        }
+      ],
+      "frequency": 19,
+      "durationSecs": 371476.4210526316
+    },
+    {
+      "id": "edge:Vehicle:station:Depart:sink:Vehicle",
+      "source": "station:Depart",
+      "target": "sink:Vehicle",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 6,
+      "frequency": 127
+    },
+    {
+      "id": "edge:Vehicle:station:Load to Vehicle:station:Book Vehicles",
+      "source": "station:Load to Vehicle",
+      "target": "station:Book Vehicles",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 6,
+      "waypoints": [
+        {
+          "rank": 11,
+          "lane": 9.151456126937283
+        },
+        {
+          "rank": 10,
+          "lane": 7.543364602336476
+        },
+        {
+          "rank": 9,
+          "lane": 7.937866328961414
+        },
+        {
+          "rank": 8,
+          "lane": 6.316087020706594
+        },
+        {
+          "rank": 7,
+          "lane": 7.246783530673636
+        },
+        {
+          "rank": 6,
+          "lane": 5.47730655356944
+        },
+        {
+          "rank": 5,
+          "lane": 6.8620583060625
+        },
+        {
+          "rank": 4,
+          "lane": 5.480654960157748
+        }
+      ],
+      "frequency": 2,
+      "durationSecs": 5679
+    },
+    {
+      "id": "edge:Vehicle:station:Load to Vehicle:station:Depart",
+      "source": "station:Load to Vehicle",
+      "target": "station:Depart",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 6,
+      "frequency": 127,
+      "durationSecs": 72985.88976377953
+    },
+    {
+      "id": "edge:Vehicle:station:Load to Vehicle:station:Load to Vehicle",
+      "source": "station:Load to Vehicle",
+      "target": "station:Load to Vehicle",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 6,
+      "frequency": 1827,
+      "durationSecs": 1960.5944170771756
+    },
+    {
+      "id": "edge:Vehicle:station:Reschedule Container:station:Book Vehicles",
+      "source": "station:Reschedule Container",
+      "target": "station:Book Vehicles",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 6,
+      "waypoints": [
+        {
+          "rank": 10,
+          "lane": 10.543364602336476
+        },
+        {
+          "rank": 9,
+          "lane": 10.937866328961414
+        },
+        {
+          "rank": 8,
+          "lane": 9.316087020706593
+        },
+        {
+          "rank": 7,
+          "lane": 10.246783530673635
+        },
+        {
+          "rank": 6,
+          "lane": 9.47730655356944
+        },
+        {
+          "rank": 5,
+          "lane": 9.862058306062501
+        },
+        {
+          "rank": 4,
+          "lane": 7.480654960157748
+        }
+      ],
+      "frequency": 12,
+      "durationSecs": 22237.916666666668
+    },
+    {
+      "id": "edge:Vehicle:station:Reschedule Container:station:Load to Vehicle",
+      "source": "station:Reschedule Container",
+      "target": "station:Load to Vehicle",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "flow",
+      "laneOffset": 6,
+      "frequency": 7,
+      "durationSecs": 152433.14285714287
+    },
+    {
+      "id": "edge:Vehicle:station:Reschedule Container:station:Reschedule Container",
+      "source": "station:Reschedule Container",
+      "target": "station:Reschedule Container",
+      "objectType": "Vehicle",
+      "variable": false,
+      "kind": "loop",
+      "laneOffset": 6,
+      "frequency": 16,
+      "durationSecs": 40895.8125
+    }
+  ],
+  "stats": {
+    "basis": "directlyFollows",
+    "stations": 14,
+    "arcs": 77,
+    "objectTypes": 7
+  }
+}

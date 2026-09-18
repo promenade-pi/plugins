@@ -1,0 +1,139 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.event-log-transformations",
+  "name": "Event Log Transformations",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Compares two object-centric event logs. Reports strict equality across every relation, structural equivalence up to identifier and generated-type renaming (a bounded color-refinement bijection), reciprocal coverage percentages when they differ, and suspected automatic renames (case, whitespace or normalization differences — e.g. a SQLite export sanitizing a table name) on object-type, event-type and attribute names. The structural check is an explicitly bounded approximation, not a full graph-isomorphism decision.",
+  "runtime": "pyodide",
+  "entry": "plugin.py",
+  "pythonDeps": [
+    "pyarrow"
+  ],
+  "artifactTypes": [
+    {
+      "id": "EventLogComparison",
+      "label": "Event Log Comparison",
+      "shortLabel": "LOG Δ",
+      "family": "result"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.event-log-transformations.compare",
+      "label": "Compare event logs",
+      "memory": "high",
+      "inputs": [
+        {
+          "name": "baseline",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "a baseline object-centric event log",
+          "requires": [
+            "objects"
+          ]
+        },
+        {
+          "name": "candidate",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "a candidate object-centric event log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "comparison",
+          "type": "EventLogComparison"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "maxEntities": {
+            "type": "integer",
+            "title": "Max entities per log",
+            "description": "Safety cap on events + objects pulled into memory for the structural check. Beyond this the structural verdict is reported as undetermined rather than guessed.",
+            "default": 200000,
+            "minimum": 1000,
+            "maximum": 2000000,
+            "primary": true
+          },
+          "maxSearchNodes": {
+            "type": "integer",
+            "title": "Isomorphism search budget",
+            "description": "Backtracking nodes explored when color refinement leaves a renaming ambiguous (the logs have non-trivial automorphisms). 0 disables the search — color-histogram evidence only.",
+            "default": 50000,
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "renameSimilarity": {
+            "type": "number",
+            "title": "Suspected-rename threshold",
+            "description": "Jaro–Winkler similarity above which two otherwise-unmatched names are flagged as a likely automatic rename.",
+            "default": 0.9,
+            "minimum": 0.5,
+            "maximum": 1
+          },
+          "typeNamesOpaque": {
+            "type": "boolean",
+            "title": "Treat type names as renameable",
+            "description": "Exclude object-type and event-type names from the structural signature, so an automatic rename does not by itself count as a structural difference.",
+            "default": false
+          }
+        },
+        "required": [
+          "maxEntities",
+          "maxSearchNodes",
+          "renameSimilarity"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.event-log-transformations.report",
+      "label": "Log comparison",
+      "kind": "sandboxed",
+      "entry": "view.js",
+      "appliesTo": [
+        "EventLogComparison"
+      ]
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog",
+    "EventLogComparison"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "citation": {
+    "text": "Strict equality and structural isomorphism follow the OCEL equivalence definitions of the transformation-calculus draft (Definitions 1–2). The structural decision procedure is a bounded 1-dimensional Weisfeiler–Leman color refinement with a capped backtracking search, not a complete isomorphism test."
+  },
+  "keywords": [
+    "comparison",
+    "object-centric",
+    "ocel",
+    "event-log",
+    "isomorphism",
+    "equivalence",
+    "rename-detection",
+    "transformation"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ],
+  "author": "István Koren"
+}

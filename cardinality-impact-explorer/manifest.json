@@ -1,0 +1,104 @@
+{
+  "manifestVersion": 1,
+  "id": "run.promenade.cardinality-impact-explorer",
+  "name": "Cardinality Impact Explorer",
+  "version": "0.1.0",
+  "author": "István Koren",
+  "license": "MIT",
+  "description": "Explores how an object-type cardinality scenario propagates into the variants, elapsed time and rework indicators of a downstream object lifecycle in an object-centric event log.",
+  "runtime": "pyodide",
+  "entry": "plugin.py",
+  "pythonDeps": [
+    "pandas"
+  ],
+  "artifactTypes": [
+    {
+      "id": "CardinalityImpactReport",
+      "label": "Cardinality Impact Explorer",
+      "shortLabel": "IMPACT",
+      "family": "result"
+    }
+  ],
+  "actions": [
+    {
+      "id": "run.promenade.cardinality-impact-explorer.analyze",
+      "label": "Explore Cardinality Impact",
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": [
+            "objects"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "CardinalityImpactReport"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "maxEvents": {
+            "type": "integer",
+            "title": "Event limit",
+            "description": "Safety ceiling for the extracted OCEL relations and object lifecycles. A truncated run is labeled in the report.",
+            "default": 100000,
+            "minimum": 1000,
+            "maximum": 500000,
+            "multipleOf": 1000,
+            "primary": true
+          }
+        },
+        "required": [
+          "maxEvents"
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "run.promenade.cardinality-impact-explorer.view",
+      "label": "Cardinality impact",
+      "kind": "sandboxed",
+      "entry": "view.js",
+      "appliesTo": [
+        "CardinalityImpactReport"
+      ],
+      "primary": true
+    }
+  ],
+  "consumes": [
+    "ObjectCentricEventLog",
+    "CardinalityImpactReport"
+  ],
+  "authors": [
+    {
+      "name": "István Koren",
+      "email": "korenistvan@inf.elte.hu",
+      "affiliation": "ELTE University Budapest, Data Science and Engineering",
+      "orcid": "0000-0003-1350-6732"
+    }
+  ],
+  "keywords": [
+    "object-centric",
+    "ocel",
+    "cardinality",
+    "scenario",
+    "impact",
+    "variants",
+    "performance"
+  ],
+  "readme": "README.md",
+  "docs": [
+    {
+      "path": "CHANGELOG.md",
+      "title": "Changelog"
+    }
+  ]
+}

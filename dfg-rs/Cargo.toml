@@ -1,0 +1,27 @@
+[package]
+name = "promenade-dfg"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Only pulled in (and only compiled) for the browser build — the
+# wasm32-wasip1 (engine) build talks to `dfg_core` directly, no JS glue.
+[target.'cfg(not(target_os = "wasi"))'.dependencies]
+wasm-bindgen = "0.2"
+serde-wasm-bindgen = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+# Keeps the module small; the host loads it per plugin and the download is on
+# the interaction path the first time an action runs. Engine-side, a panic
+# under this profile traps the whole Wasmtime instance rather than
+# unwinding — `wasi.rs` accounts for that; see its comment on `run`.
+panic = "abort"
